@@ -6,6 +6,35 @@
 
 \section{RGB-D相机}
 \subsection{RGB-D相机原理与结构}
+RGB-D相机获取深度的原理大致可以分为三种：
+\begin{itemize}
+\item Structure Light
+\item Time of Flight(ToF)
+\item Stereo
+\end{itemize}
+
+% @TODO: 加些原理图?
+Structure Light获取深度信息的原理是通过激光发射器投射带有特定编码的结构光到物体表面后，由IR Camera采集，根据采集到的光信号量的变化来计算物体的深度。举一个形象的例子，将手电筒照向墙面，手电筒离墙面越远，墙面上所形成的光斑的直径就越大，所以可以通过光斑的直径来计算手电筒距离墙面的距离。ToF获取深度信息的原理是通过专有的传感器捕捉红外光发射到接收的飞行时间来计算物体的深度。Stereo是通过双摄像头拍摄物体，再通过特征点匹配，根据三角测量原理来计算物体的深度。
+
+三种原理的深度相机各有其特点，采用Structure Light原理的深度相机一般精度比较高，但景深比较短并且受光线影响比较大，适合室内场景；ToF原理的深度相机获取深度图的精度和分辨率一般都比较低，但帧率高，并且具有一定的抗光照性能；Stereo获取深度精度适中，帧率相对来说较低，并且需要较强的计算性能，但抗光照能力强，适合室外场景。
+
+本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度，其内部结构如图\ref{fig:sr300}所示。
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=12cm]{sr300}
+  \caption{Realsense SR300内部结构图}
+  \label{fig:sr300}
+\end{figure}
+从图\ref{fig:sr300}可以看出，SR300内部的传感器主要有Color Camera、Infrared Laser Projector和Infrared Camera。Color Camera是1920×1080像素的普通针孔摄像头，用来获取彩色图像；Infrared Laser Projector和Infrared Camera用来获取深度图像或者红外成像图，两种成像流程如图\ref{fig:capture_flow}所示。
+\begin{figure}[!ht]
+  \centering
+  \subfloat[Depth Video Data Flow]{\includegraphics[width=12cm]{depth_flow}}
+  \vfill
+  \subfloat[IR Video Data Flow]{\includegraphics[width=12cm]{ir_flow}}
+  \caption{Realsense SR300深度成像流程}
+  \label{fig:capture_flow}
+\end{figure}
+其中当Infrared Laser Projector投射带有编码的结构光时，Infrared Camera可以获取深度图；当投射不带编码的红外光时，Infrared Camera可以获取红外成像图。
 
 \subsection{RGB-D相机标定}
 
