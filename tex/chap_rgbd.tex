@@ -18,7 +18,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 
 三种原理的深度相机各有其特点，采用Structure Light原理的深度相机一般精度比较高，但景深比较短并且受光线影响比较大，适合室内场景；ToF原理的深度相机获取深度图的精度和分辨率一般都比较低，但帧率高，并且具有一定的抗光照性能；Stereo获取深度精度适中，帧率相对来说较低，并且需要较强的计算性能，但抗光照能力强，适合室外场景。
 
-本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度，其内部结构如图\ref{fig:sr300}所示。
+本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=12cm]{sr300}
@@ -36,32 +36,14 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 \end{figure}
 其中当Infrared Laser Projector投射带有编码的结构光时，Infrared Camera可以获取深度图；当投射不带编码的红外光时，Infrared Camera可以获取红外成像图。正常使用时，往往设置Infrared Laser Projector投射带有编码的结构光来获取深度信息。因此，从RGB-D相机的使用来看，可以忽略其内部具体结构，将其看成由一个彩色摄像头和一个深度摄像头构成，其中彩色摄像获取彩色（RGB）信息，深度摄像头获取深度（depth）信息。
 
-\subsection{RGB-D相机标定}
-根据上文所述的RGB-D相机的结构，RGB-D相机的标定主要涉及到彩色摄像头内参和畸变的标定，深度摄像头内参和畸变的标定，以及彩色摄像头和深度摄像头之间位姿变换的标定。由于RGB-D相机是一种较为新颖的相机，所以市面上基本上没有较为成熟通用的标定RGB-D相机的方法以及对应的工具。因此本文针对所使用的Realsense SR300相机，设计了一套标定方法。
-\subsubsection{RGB-D相机模型}
+\subsection{RGB-D相机的数学模型}
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=8cm]{rgbd_model}
   \caption{RGB-D相机模型}
   \label{fig:rgbd_model}
 \end{figure}
-图\ref{fig:rgbd_model}展示了本文所使用的RGB-D相机的基本模型，其中彩色摄像头和深度摄像头都使用了针孔(pin-hole)相机模型\cite{Heikkila2000}。
-%先考虑普通彩色相机的模型，彩色相机图像坐标系下一点$\tensor*[^R]{\bm{u}}{}:=[\prescript{R}{}{u},\prescript{R}{}{v}]^T$，其中上标$R$表示彩色相机（RGB），$\tensor*[^R]{\bm{u}}{}$对应的三维世界中的一点在彩色相机坐标系下表示为$\tensor*[^R]{\bm{X}}{}:=[\prescript{R}{}{x},\prescript{R}{}{y},\prescript{R}{}{z}]^T$。根据针孔相机模型有：
-%\begin{equation}
-%  \label{eq:r_cam_model}
-%  \prescript{R}{}{z}{}\tensor[^R]{\bm{\tilde{u}}}{} = \tensor[^R]{\bm{K}}{}\tensor[^R]{\bm{X}}{}
-%\end{equation}
-%其中$\tensor[^R]{\bm{\tilde{u}}}{}$表示$\tensor[^R]{\bm{u}}{}$的齐次变换形式，彩色相机的内参矩阵$\tensor[^R]{\bm{K}}{}$的定义如下：
-%\begin{equation}
-%  \tensor[^R]{\bm{K}}{} := \left[
-%    \begin{array}{ccc}
-%      \prescript{R}{}{f}_u&0&\prescript{R}{}{u}_0 \\
-%      0&\prescript{R}{}{f}_v&\prescript{R}{}{v}_0 \\
-%      0&0&1
-%    \end{array}
-%  \right]
-%\end{equation}
-%其中$\prescript{R}{}{f}_u$和$\prescript{R}{}{f}_v$分别表示彩色相机在图像坐标轴上的焦距（以像素为单位），$\prescript{R}{}{u}_0$，$\prescript{R}{}{v}_0$表示彩色相机光心在图像平面的投影中心。
+图\ref{fig:rgbd_model}展示了本文所使用的RGB-D相机的基本物理模型，其中彩色摄像头和深度摄像头都使用了针孔(pin-hole)相机模型\cite{Heikkila2000}。
 先考虑普通针孔相机的模型，相机图像坐标系下一点$\bm{u}:=[u,v]^T$，对应的三维世界中的一点在相机坐标系下表示为$\bm{X}:=[x,y,z]^T$。根据针孔相机模型有：
 \begin{equation}
   \label{eq:cam_model}
@@ -109,7 +91,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
     \right.
   \end{equation}
   其中$p_1$，$p_2$是切向畸变的参数。
-\item 结合公式\ref{eq:radial}和\ref{eq:trang}可以得到修正径向畸变和切向畸变的模型：
+\item 结合公式\ref{eq:radial}和\ref{eq:trang}可以得到修正径向畸变和切向畸变的Brown–Conrady模型\cite{Brown1966}：
   \begin{equation}
     \label{eq:dist}
     \left\{
@@ -136,13 +118,20 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
     \begin{array}{ccc}
       \bar{x}(1 + k_1r^2 + k_2r^4 + k_3r^6) + (2p_1\bar{x}\bar{y} + p_2(r^2 + 2\bar{x}^2))\\
       \bar{y}(1 + k_1r^2 + k_2r^4 + k_3r^6) + (p_1(r^2 + 2\bar{y}^2) + 2p_2\bar{x}\bar{y})\\
+    \end{array}
+  \right]
+\end{equation}
+\begin{equation}
+  \tilde{f}_{undist}(\bm{d}, \bm{X}):=\left[
+    \begin{array}{c}
+      f_{undist}(\bm{d}, \bm{X})\\
       1
     \end{array}
   \right]
 \end{equation}
-则公式\ref{eq:dis_cam_model}可简化为：
+则公式\ref{eq:dist_cam_model}可简化为：
 \begin{equation}
-  \tilde{\bm{u}} = \bm{K}\cdot f_{undist}(\bm{d}, \bm{X})
+  \tilde{\bm{u}} = \bm{K}\cdot \tilde{f}_{undist}(\bm{d}, \bm{X})
 \end{equation}
 其中需要标定的参数有相机内参矩阵$\bm{K}$（包含未知参数$f_u$，$f_v$，$u_0$，$v_0$）以及畸变参数$\bm{d}$（包含未知参数$k_1$，$k_2$，$p_1$，$p_2$，$k_3$），共9个参数。
 
@@ -151,18 +140,88 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
   \label{eq:rgbd_cam_model}
   \left\{
     \begin{array}{ccc}
-      \tensor*[^R]{\tilde{\bm{u}}}{}&=&\tensor*[^R]{\bm{K}}{}\cdot f_{undist}(\tensor*[^R]{\bm{d}}{},\tensor*[^R]{\bm{X}}{})\\
-      \tensor*[^D]{\tilde{\bm{u}}}{}&=&\tensor*[^D]{\bm{K}}{}\cdot f_{undist}(\tensor*[^D]{\bm{d}}{},\tensor*[^D]{\bm{X}}{})\\
+      \tensor*[^R]{\tilde{\bm{u}}}{}&=&\tensor*[^R]{\bm{K}}{}\cdot \tilde{f}_{undist}(\tensor*[^R]{\bm{d}}{},\tensor*[^R]{\bm{X}}{})\\
+      \tensor*[^D]{\tilde{\bm{u}}}{}&=&\tensor*[^D]{\bm{K}}{}\cdot \tilde{f}_{undist}(\tensor*[^D]{\bm{d}}{},\tensor*[^D]{\bm{X}}{})\\
       \tensor*[^R]{\bm{X}}{} &=& \tensor*[^R_D]{\bm{R}}{}\tensor*[^D]{\bm{X}}{} + \tensor*[^R_D]{\bm{t}}{}
     \end{array}
   \right.
 \end{equation}
 其中左上标$\{R\}$表示SR300相机中的彩色相机（RGB），$\{D\}$表示SR300相机中的深度相机（Depth），$\tensor*[^R_D]{\bm{R}}{}$和$\tensor*[^R_D]{\bm{t}}{}$表示了彩色相机坐标系和深度相机坐标系之间的齐次变换关系。
 
+\subsubsection{RGB-D相机的标定流程}
+根据上文所述的RGB-D相机的结构及数学模型，RGB-D相机的标定主要涉及到彩色摄像头内参和畸变的标定，深度摄像头内参和畸变的标定，以及彩色摄像头和深度摄像头之间位姿变换的标定。由于RGB-D相机是一种较为新颖的相机，所以市面上基本上没有较为成熟通用的标定RGB-D相机的方法以及对应的工具。因此本文针对所使用的Realsense SR300相机，设计了一套标定方法。
+
+根据公式\ref{eq:rgbd_cam_model}可知相机需要标定的参数有彩色相机内参和畸变参数9个，深度相机内参和畸变参数9个，彩色相机和深度相机之间的位姿关系6个，一共24个参数。一起标定这24个参数理论上是相当困难的，考虑到普通针孔相机的标定技术已经相当成熟（如张正友的棋盘格标定\cite{Zhang2002}，以及RGB-D相机中彩色相机和深度相机的解耦性，因此所设计的标定方法分为三步：
+\begin{enumerate}[  Step 1]
+\item 标定彩色相机内参以及畸变参数
+\item 标定深度相机内参以及畸变参数
+\item 标定彩色相机和深度相机之间的齐次变换关系
+\end{enumerate}
+
+步骤1标定彩色相机内参以及畸变参数相对来说比较简单，主要参考文献\cite{Zhang2002}，但所使用的标定板是不对称圆盘标定板（Asymmetrical Circle Board），如图\ref{fig:circle_board}是$4\times 11$的不对称圆盘标定板。
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=13cm]{circle_board}
+  \caption{Asymmetrical Circle Board}
+  \label{fig:circle_board}
+\end{figure}
+使用圆盘标定板而非棋盘格标定板的原因是圆盘相对于棋盘格有更高的检测精度，在某些情况下可以达到0.1到0.01像素的亚像素精度，当然代价是相比计算棋盘格的角点，计算椭圆（圆形经过投影变换后退化为椭圆）的中心会涉及到较为复杂的数学运算，这也是为什么工业上大多使用圆盘作为标定板的原因。
+
+步骤2标定深度相机内参以及畸变参数的方法和步骤1类似，区别在于深度相机并不能直接获得颜色信息，因此也不能直接检测图\ref{fig:circle_board}所示的标定板。但是，幸运的是，根据前文所述的SR300深度相机的原理，其本质上也是个普通的针孔相机，只不过在其镜头上加上了滤波片，可以认为其只对红外光成像。因此，只要使用图\ref{fig:capture_flow}中的红外成像模式获取红外成像图，在红外成像图上检测标定板。如图\ref{fig:circle_on_ir}所示，在红外成像图中检测出了标定板。
+% @TODO: missing figure
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=12cm]{circle_on_ir}
+  \caption{红外成像图中检测标定板}
+  \label{fig:circle_on_ir}
+\end{figure}
+
+步骤3标定彩色相机和深度相机之间的齐次变换关系需要依赖于步骤1和步骤2中标定出的彩色相机和深度相机的内参和畸变参数，具体做法是将标定板放在彩色相机和深度相机下，使彩色相机和深度相机能够同时检测到标定板，然后分别根据各自的内参和畸变参数计算出标定板的位姿$\tensor*[^R_B]{\bm{H}}{}$和$\tensor*[^D_B]{\bm{H}}{}$，其中$\tensor*[^R_B]{\bm{H}}{}$是$4\times 4$的齐次变换矩阵，表示标定板在彩色相机坐标系下的位姿，也是彩色相机坐标系变换到标定板坐标系的齐次变换矩阵；$\tensor*[^D_B]{\bm{H}}{}$也是$4\times 4$的齐次变换矩阵，表示标定板在深度相机坐标系下的位姿，也是深度相机坐标系变换到标定板坐标系的齐次变换矩阵。从而所要求的彩色相机坐标系变换到深度相机坐标系的齐次变换矩阵为：
+\begin{equation}
+  \tensor*[^R_D]{\bm{H}}{} = \tensor*[^R_B]{\bm{H}}{}\tensor*[^D_B]{\bm{H}}{^{-1}}
+\end{equation}
+其中
+\begin{equation}
+  \tensor*[^R_D]{\bm{H}}{} := \left[
+    \begin{array}{cc}
+      \tensor*[^R_D]{\bm{R}}{}& \tensor*[^R_D]{\bm{t}}{}\\
+      \bm{0}_{1\times 3}&1
+    \end{array}
+\right]
+\end{equation}
+当然，实际标定时，往往会采取多组$\tensor*[^R_B]{\bm{H}}{}$和$\tensor*[^D_B]{\bm{H}}{}$来提高标定的精度。
+
 \section{对偶RGB-D相机}
+使用SR300相机时，发现相机在某些情况下，对一些反光的物体的深度图有严重的缺失，具体如图\ref{fig:depth_missing}所示。
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=12cm]{depth_missing}
+  \caption{SR300采集的物体深度信息部分缺失情况下的深度图}
+  \label{fig:depth_missing}
+\end{figure}
+经过实验，发现这种缺失情况的出现和拍摄的角度以及光线有关，因此本文提出一种组合相机对偶RGB-D相机（Dual RGB-D Camera）。
 
 \subsection{对偶RGB-D相机原理与结构}
+对偶RGB-D相机在原RGB-D相机的基础上，通过增加一个与原相机呈180度夹角的RGB-D相机构成，具体物理结构如图\ref{fig:dual_rgbd}所示。
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=12cm]{dual_rgbd}
+  \caption{对偶RGB-D相机结构}
+  \label{fig:dual_rgbd}
+\end{figure}
+对于对偶RGB-D相机，当其中一个相机深度图出现严重缺失时，另外一个相机的深度图往往不会在相同的地方深度信息出现严重的缺失，如图\ref{fig:dual_rgbd_depth}所示，有效的避免了单个RGB-D相机某些情况下深度信息严重缺失的情况。
+\begin{figure}[!ht]
+  \centering
+  \subfloat[左相机采集的深度图]{\includegraphics[width=6cm]{depth_flow}}
+  \hfill
+  \subfloat[右相机采集的深度图]{\includegraphics[width=6cm]{ir_flow}}
+  \caption{对偶RGB-D相机采集的左右两张深度图}
+  \label{fig:dual_rgbd_depth}
+\end{figure}
+除此之外，对偶RGB-D相机还可以利用两个相机的彩色图构成双目，生成第三张深度图，从而通过设计的深度的融合算法将三张深度图融合成为一张质量更高的深度图。
+
+\subsection{对偶RGB-D相机的数学模型}
 
 \subsection{深度图像融合算法}
 
-\subsection{对偶RGB-D相机标定}
+\subsection{对偶RGB-D相机的标定}
