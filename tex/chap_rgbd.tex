@@ -202,13 +202,14 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 经过实验，发现这种缺失情况的出现和拍摄的角度以及光线有关，因此本文提出一种组合相机对偶RGB-D相机（Dual RGB-D Camera）。
 
 \subsection{对偶RGB-D相机原理与结构}
-对偶RGB-D相机在原RGB-D相机的基础上，通过增加一个与原相机呈180度夹角的RGB-D相机构成，具体物理结构如图\ref{fig:dual_rgbd}所示。
+对偶RGB-D相机在原RGB-D相机的基础上，通过增加一个与原相机呈180度夹角的RGB-D相机构成，实际物理结构如图\ref{fig:dual_rgbd}所示。
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=12cm]{dual_rgbd}
   \caption{对偶RGB-D相机结构}
   \label{fig:dual_rgbd}
 \end{figure}
+
 对于对偶RGB-D相机，当其中一个相机深度图出现严重缺失时，另外一个相机的深度图往往不会在相同的地方深度信息出现严重的缺失，如图\ref{fig:dual_rgbd_depth}所示，有效的避免了单个RGB-D相机某些情况下深度信息严重缺失的情况。
 \begin{figure}[!ht]
   \centering
@@ -218,10 +219,46 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
   \caption{对偶RGB-D相机采集的左右两张深度图}
   \label{fig:dual_rgbd_depth}
 \end{figure}
-除此之外，对偶RGB-D相机还可以利用两个相机的彩色图构成双目，生成第三张深度图，从而通过设计的深度的融合算法将三张深度图融合成为一张质量更高的深度图。
+
+除此之外，对偶RGB-D相机还可以利用两个相机的彩色图构成双目，生成第三张深度图，从而通过设计的深度的融合算法将三张深度图融合成为一张质量更高的深度图，其内部原理如图\ref{fig:dual_rgbd_struct}所示。
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=16cm]{dual_rgbd_struct}
+  \caption{对偶RGB-D相机内部原理图}
+  \label{fig:dual_rgbd_struct}
+\end{figure}
+
+从外部使用来看，对偶RGB-D相机也输出一张彩色图、一张深度图。输出的彩色图就是从左相机采集到的彩色图；输出的深度图是由三张深度图融合而成，并且与输出的彩色图相对齐，对齐的意思是彩色图和深度图相同图像坐标下的颜色信息和深度信息对应的实际物理世界中相同的一点，对齐的意义在于方便后续的一些图像处理的算法。
+
+从内部实现来看，主要涉及到三个部分：
+\begin{itemize}
+\item 将深度图与输出的彩色图对齐(Align to RGB)
+\item 利用左相机采集的彩色图和右相机采集的彩色图，通过双目匹配算法形成一张新的深度图
+\item 融合左相机对齐后的深度图、右相机对齐后的深度图和双目匹配得到的深度图
+\end{itemize}
+将深度图与彩色图对齐，相对来讲实现还是比较简单的，以匹配左相机深度图到左相机彩色图为例，需要分别知道左相机深度相机和彩色相机的内参和畸变参数以及深度相机与彩色相机之间的齐次变换关系（通过相机标定这些参数都可以得到）。具体流程如算法\ref{alg:align}所示。
+\begin{algorithm}[!ht]
+  \caption{Align Depth Frame}
+  \label{alg:align}
+  \KwIn{Raw Depth Frame $Raw\_D_{dh\times dw}$}
+  \KwOut{Aligned Depth Frame $Aligned\_D_{ch\times cw}$}
+  \For {p in $Aligned\_D$} {
+    $p = 0$
+  }
+  \For {dy = 1; dy <= dh; ++dy} {
+    \For {dx = 1; dx <= dw; ++dx} {
+      通过深度相机内参将点$(dx, dy)$反投影到三维空间一点$\tensor*[^D]{\bm{X}}{}$\;
+      坐标变换$\tensor*[^R]{\bm{X}}{} = \tensor*[^R_D]{\bm{R}}{}\tensor*[^D]{\bm{X}}{} + \tensor*[^R_D]{\bm{t}}{}$\;
+      通过彩色相机内参将点$\tensor*[^R]{\bm{X}}{}$投影变换到彩色图像坐标系下一点$(cx, cy)$\;
+      \If {cx in $(0, cw]$ and cy in $(0, ch]$} {
+        $Aligned\_D(cx, cy) = Raw\_D(dx, dy)$\;
+      }
+    }
+  }
+\end{algorithm}
+
 
 \subsection{对偶RGB-D相机的数学模型}
-
 \subsection{深度图像融合算法}
 
 \subsection{对偶RGB-D相机的标定}
