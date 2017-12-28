@@ -161,14 +161,13 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 步骤1标定彩色相机内参以及畸变参数相对来说比较简单，主要参考文献\cite{Zhang2002}，但所使用的标定板是不对称圆盘标定板（Asymmetrical Circle Board），如图\ref{fig:circle_board}是$4\times 11$的不对称圆盘标定板。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=13cm]{circle_board}
+  \includegraphics[width=10cm]{circle_board}
   \caption{Asymmetrical Circle Board}
   \label{fig:circle_board}
 \end{figure}
 使用圆盘标定板而非棋盘格标定板的原因是圆盘相对于棋盘格有更高的检测精度，在某些情况下可以达到0.1到0.01像素的亚像素精度，当然代价是相比计算棋盘格的角点，计算椭圆（圆形经过投影变换后退化为椭圆）的中心会涉及到较为复杂的数学运算，这也是为什么工业上大多使用圆盘作为标定板的原因。
 
 步骤2标定深度相机内参以及畸变参数的方法和步骤1类似，区别在于深度相机并不能直接获得颜色信息，因此也不能直接检测图\ref{fig:circle_board}所示的标定板。但是，幸运的是，根据前文所述的SR300深度相机的原理，其本质上也是个普通的针孔相机，只不过在其镜头上加上了滤波片，可以认为其只对红外光成像。因此，只要使用图\ref{fig:capture_flow}中的红外成像模式获取红外成像图，在红外成像图上检测标定板。如图\ref{fig:circle_on_ir}所示，在红外成像图中检测出了标定板。
-% @TODO: missing figure
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=12cm]{circle_on_ir}
@@ -195,7 +194,9 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 使用SR300相机时，发现相机在某些情况下，对一些反光的物体的深度图有严重的缺失，具体如图\ref{fig:depth_missing}所示。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=12cm]{depth_missing}
+  \subfloat[彩色图]{\includegraphics[width=7cm]{left_color}}
+  \hfill
+  \subfloat[深度图]{\includegraphics[width=7cm]{left_depth}}
   \caption{SR300采集的物体深度信息部分缺失情况下的深度图}
   \label{fig:depth_missing}
 \end{figure}
@@ -205,17 +206,17 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 对偶RGB-D相机在原RGB-D相机的基础上，通过增加一个与原相机呈180度夹角的RGB-D相机构成，实际物理结构如图\ref{fig:dual_rgbd}所示。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=12cm]{dual_rgbd}
-  \caption{对偶RGB-D相机结构}
+  \includegraphics[width=6cm]{dual_rgbd}
+  \caption{对偶RGB-D相机实际物理结构}
   \label{fig:dual_rgbd}
 \end{figure}
 
 对于对偶RGB-D相机，当其中一个相机深度图出现严重缺失时，另外一个相机的深度图往往不会在相同的地方深度信息出现严重的缺失，如图\ref{fig:dual_rgbd_depth}所示，有效的避免了单个RGB-D相机某些情况下深度信息严重缺失的情况。
 \begin{figure}[!ht]
   \centering
-  \subfloat[左相机采集的深度图]{\includegraphics[width=6cm]{depth_flow}}
+  \subfloat[左相机采集的深度图]{\includegraphics[width=7cm]{left_depth}}
   \hfill
-  \subfloat[右相机采集的深度图]{\includegraphics[width=6cm]{ir_flow}}
+  \subfloat[右相机采集的深度图(为了方便比较旋转了180度)]{\includegraphics[width=7cm, angle=180, origin=c]{right_depth}}
   \caption{对偶RGB-D相机采集的左右两张深度图}
   \label{fig:dual_rgbd_depth}
 \end{figure}
@@ -236,7 +237,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 \item 利用左相机采集的彩色图和右相机采集的彩色图，通过双目匹配算法形成一张新的深度图
 \item 融合左相机对齐后的深度图、右相机对齐后的深度图和双目匹配得到的深度图
 \end{itemize}
-将深度图与彩色图对齐，相对来讲实现还是比较简单的，以匹配左相机深度图到左相机彩色图为例，需要分别知道左相机深度相机和彩色相机的内参和畸变参数以及深度相机与彩色相机之间的齐次变换关系（通过相机标定这些参数都可以得到）。具体流程如算法\ref{alg:align}所示。
+将深度图与彩色图对齐，相对来讲实现还是比较简单的，对齐深度图的具体流程如算法\ref{alg:align}所示。
 \begin{algorithm}[!ht]
   \caption{Align Depth Frame}
   \label{alg:align}
@@ -256,9 +257,100 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
     }
   }
 \end{algorithm}
+算法\ref{alg:align}主要将深度图中每个点的图像坐标利用该点的深度信息反投影变换到实际三维空间中一点，然后将该点坐标变换到彩色相机坐标系下，最后通过彩色相机的内参将该点在彩色相机坐标系下的三维坐标投影变换到彩色图像上的二维坐标。实际对齐三张深度图时，对于左相机深度图对齐到左相机彩色图，需要分别知道左相机深度相机和彩色相机的内参和畸变参数以及深度相机与彩色相机之间的齐次变换关系（通过相机标定这些参数都可以得到）；双目匹配得到的深度图本来就以及与左相机彩色图对齐，因此无需再对齐；对齐右相机到左相机彩色图，除了要知道右相机标定的参数外，还需要知道右相机与左相机之间的其次变换关系（通过对偶RGB-D相机的标定得到）。
 
-
-\subsection{对偶RGB-D相机的数学模型}
-\subsection{深度图像融合算法}
+融合左相机对齐后的深度图、右相机对齐后的深度图以及双目匹配得到的深度这三张深度图的算法首先做的是分别对这三张深度图进行预处理，填补一些深度缺失的像素，因为对齐后的深度图和双目匹配得到的深度图深度信息都有细微的缺失，填补深度信息缺失的方法如算法\ref{alg:fill_hole}所示。
+\begin{algorithm}[!ht]
+  \caption{Fill Holes in Depth Frame}
+  \label{alg:fill_hole}
+  \KwIn{Depth Frame $D_{h\times w}$}
+  \KwOut{Filled Depth Frame $FD_{h\times w}$}
+  \For {y = 1; y <= h; ++y} {
+    \For {x = 1; x <=w ; ++x} {
+      \If {valid($D_{x,y}$)} {
+        $FD_{x,y} = D_{x,y}$\;
+      } \Else {
+        $FD_{x,y}$= NAN\;
+        bool leftTop = valid($D_{x-1, y-1}$) or valid($D_{x, y-1}$) or valid($D_{x-1, y}$)\;
+        bool leftBottom = valid($D_{x-1, y+1}$) or valid($D_{x, y+1}$) or valid($D_{x-1, y}$)\;
+        bool rightTop = valid($D_{x+1, y-1}$) or valid($D_{x, y-1}$) or valid($D_{x+1, y}$)\;
+        bool rightBottom = valid($D_{x+1, y+1}$) or valid($D_{x, y+1}$) or valid($D_{x+1, y}$)\;
+        \If {leftTop and leftBottom and rightTop and rightBottom} {
+          validPoints = \{\}\;
+          \For {dy = -1; dy <=1; ++dy} {
+            \For {dx = -1; dx <=1; ++dx} {
+              \If {valid($D_{dx, dy}$)} {
+                push back $D_{x, y}$ to validPoints\;
+              }
+            }
+          }
+          \If {max(validPoints) - min(validPoints) < 0.05} {
+            $FD_{x,y}$= mean(validPoints)\;
+          }
+        }
+      }
+    }
+  }
+\end{algorithm}
+算法\ref{alg:fill_hole}主要实现对于深度缺失的点，将检查其周围的深度信息，当其四个角上都有有效的深度信息时，并且周围有效深度信息的极值小于一定阈值时，会用周围有效深度信息的均值填充该缺失的点。实际的效果如图\ref{fig:fill_hole}所示。
+\begin{figure}[!ht]
+  \centering
+  % @TODO:
+  \caption{填补深度信息缺失算法效果图}
+  \label{fig:fill_hole}
+\end{figure}
+分别对深度图进行预处理后，将会对三张深度图进行线性叠加得到最终的深度图，基本叠加的公式如\ref{eq:linear}所示。
+\begin{equation}
+  \label{eq:linear}
+  d_{fuse} = \frac{w_1d_{left} + w_2d_{right}+w_3d_{stereo}}{w_1+w_2+w_3}
+\end{equation}
+其中$w_1,w_2,w_3$分别表示左相机深度、右相机深度以及双目匹配深度的权重，SR300相机得到深度的精度比双目计算得到的深度要高，所以实际使用时$w_1,w_2$要比$w_3$大许多。融合三张深度图的理论相对简单，但实际上，三张深度图的深度信息并非都会永远有效，因此根据实际情况实际的融合算法如\ref{alg:fuse}所示。
+\begin{algorithm}[!ht]
+  \caption{Fuse Depth Frames}
+  \label{alg:fuse}
+  \KwIn{leftDepth, rightDepth, stereoDepth}
+  \KwOut{fuseDepth}
+  Initialize w1,w2,w3\;
+  \For {(d1,d2,d3,d4) in (leftDepth, rightDepth, stereoDepth, fuseDepth)} {
+    validDepth = [], validWeight = []\;
+    \For {i = 1 to 3} {
+      \If {di is valid} {
+        push back di to validDepth, wi to validWeight\;
+      }
+    }
+    \If {size of validDepth == 0} {
+      d4 = NAN\;
+    } \ElseIf {size of validDepth == 1} {
+      d4 = validDepth[1]\;
+    } \ElseIf {size of validDepth == 2 } {
+      \If {extremum of validDepth < 0.03} {
+        d4 = validDepth $\cdot$ validWeight / sum of validWeight\;
+      } \Else {
+        d4 = NAN\;
+      }
+    } \Else {
+      mediumDepth = medium(validDepth)\;
+      d4 = 0, sum = 0\;
+      \For {(d,w) in (validDepth, validWeight)} {
+        \If {abs(d-mediumDepth) < 0.03} {
+          d4 += d*w\;
+          sum += w\;
+        }
+      }
+      \If {sum > 0} {
+        d4 = d4 / sum\;
+      } \Else {
+        d4 = NAN\;
+      }
+    }
+  }
+\end{algorithm}
+算法\ref{alg:fuse}不仅考虑了深度缺失的情况，对于深度信息差值过大的情况也进行了处理。实际处理的效果如图\ref{fig:fuse}所示。
+\begin{figure}[!ht]
+  \centering
+  % @TODO
+  \caption{深度融合算法效果图}
+  \label{fig:fuse}
+\end{figure}
 
 \subsection{对偶RGB-D相机的标定}
