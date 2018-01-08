@@ -142,17 +142,18 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
     \begin{array}{ccc}
       \tensor*[^R]{\tilde{\bm{u}}}{}&=&\tensor*[^R]{\bm{K}}{}\cdot \tilde{f}_{undist}(\tensor*[^R]{\bm{d}}{},\tensor*[^R]{\bm{X}}{})\\
       \tensor*[^D]{\tilde{\bm{u}}}{}&=&\tensor*[^D]{\bm{K}}{}\cdot \tilde{f}_{undist}(\tensor*[^D]{\bm{d}}{},\tensor*[^D]{\bm{X}}{})\\
-      \tensor*[^R]{\bm{X}}{} &=& \tensor*[^R_D]{\bm{R}}{}\tensor*[^D]{\bm{X}}{} + \tensor*[^R_D]{\bm{t}}{}
+      \tensor*[^R]{\bm{X}}{} &=& \tensor*[^R_D]{\,\bm{R}}{}\tensor*[^D]{\bm{X}}{} + \tensor*[^R_D]{\,\bm{t}}{}
     \end{array}
   \right.
 \end{equation}
-其中左上标$\{R\}$表示SR300相机中的彩色相机（RGB），$\{D\}$表示SR300相机中的深度相机（Depth），$\tensor*[^R_D]{\bm{R}}{}$和$\tensor*[^R_D]{\bm{t}}{}$表示了彩色相机坐标系和深度相机坐标系之间的齐次变换关系。
+其中左上标$\{R\}$表示SR300相机中的彩色相机（RGB），$\{D\}$表示SR300相机中的深度相机（Depth），$\tensor*[^R_D]{\,\bm{R}}{}$和$\tensor*[^R_D]{\,\bm{t}}{}$表示了彩色相机坐标系和深度相机坐标系之间的齐次变换关系。
 
-\subsubsection{RGB-D相机的标定流程}
+\subsection{RGB-D相机的标定流程}
+\label{sec:rgb-d_calibration}
 根据上文所述的RGB-D相机的结构及数学模型，RGB-D相机的标定主要涉及到彩色摄像头内参和畸变的标定，深度摄像头内参和畸变的标定，以及彩色摄像头和深度摄像头之间位姿变换的标定。由于RGB-D相机是一种较为新颖的相机，所以市面上基本上没有较为成熟通用的标定RGB-D相机的方法以及对应的工具。因此本文针对所使用的Realsense SR300相机，设计了一套标定方法。
 
 根据公式\ref{eq:rgbd_cam_model}可知相机需要标定的参数有彩色相机内参和畸变参数9个，深度相机内参和畸变参数9个，彩色相机和深度相机之间的位姿关系6个，一共24个参数。一起标定这24个参数理论上是相当困难的，考虑到普通针孔相机的标定技术已经相当成熟（如张正友的棋盘格标定\cite{Zhang2002}，以及RGB-D相机中彩色相机和深度相机的解耦性，因此所设计的标定方法分为三步：
-\begin{enumerate}[  Step 1]
+\begin{enumerate}[Step 1]
 \item 标定彩色相机内参以及畸变参数
 \item 标定深度相机内参以及畸变参数
 \item 标定彩色相机和深度相机之间的齐次变换关系
@@ -211,12 +212,13 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
   \label{fig:dual_rgbd}
 \end{figure}
 
-对于对偶RGB-D相机，当其中一个相机深度图出现严重缺失时，另外一个相机的深度图往往不会在相同的地方深度信息出现严重的缺失，如图\ref{fig:dual_rgbd_depth}所示，有效的避免了单个RGB-D相机某些情况下深度信息严重缺失的情况。
+对于对偶RGB-D相机，当其中一个相机深度图出现严重缺失时，另外一个相机的深度图往往不会在相同的地方深度信息出现严重的缺失，如图\ref{fig:dual_rgbd_depth}所示\footnote{实际下相机采集的图像与上相机采集的图像相差了180度，为了方便起见，都将下相机采集的图像旋转了180度}
+，有效的避免了单个RGB-D相机某些情况下深度信息严重缺失的情况。
 \begin{figure}[!ht]
   \centering
-  \subfloat[左相机采集的深度图]{\includegraphics[width=7cm]{left_depth}}
+  \subfloat[上相机采集的深度图]{\includegraphics[width=7cm]{left_depth}}
   \hfill
-  \subfloat[右相机采集的深度图(为了方便比较旋转了180度)]{\includegraphics[width=7cm, angle=180, origin=c]{right_depth}}
+  \subfloat[下相机采集的深度图]{\includegraphics[width=7cm, angle=180, origin=c]{right_depth}}
   \caption{对偶RGB-D相机采集的左右两张深度图}
   \label{fig:dual_rgbd_depth}
 \end{figure}
@@ -224,18 +226,18 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 除此之外，对偶RGB-D相机还可以利用两个相机的彩色图构成双目，生成第三张深度图，从而通过设计的深度的融合算法将三张深度图融合成为一张质量更高的深度图，其内部原理如图\ref{fig:dual_rgbd_struct}所示。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=16cm]{dual_rgbd_struct}
+  \includegraphics[width=14cm]{dual_rgbd_struct}
   \caption{对偶RGB-D相机内部原理图}
   \label{fig:dual_rgbd_struct}
 \end{figure}
 
-从外部使用来看，对偶RGB-D相机也输出一张彩色图、一张深度图。输出的彩色图就是从左相机采集到的彩色图；输出的深度图是由三张深度图融合而成，并且与输出的彩色图相对齐，对齐的意思是彩色图和深度图相同图像坐标下的颜色信息和深度信息对应的实际物理世界中相同的一点，对齐的意义在于方便后续的一些图像处理的算法。
+从外部使用来看，对偶RGB-D相机也输出一张彩色图、一张深度图。输出的彩色图就是从上相机采集到的彩色图；输出的深度图是由三张深度图融合而成，并且与输出的彩色图相对齐，对齐的意思是彩色图和深度图相同图像坐标下的颜色信息和深度信息对应的实际物理世界中相同的一点，对齐的意义在于方便后续的一些图像处理的算法。
 
 从内部实现来看，主要涉及到三个部分：
 \begin{itemize}
 \item 将深度图与输出的彩色图对齐(Align to RGB)
-\item 利用左相机采集的彩色图和右相机采集的彩色图，通过双目匹配算法形成一张新的深度图
-\item 融合左相机对齐后的深度图、右相机对齐后的深度图和双目匹配得到的深度图
+\item 利用上相机采集的彩色图和下相机采集的彩色图，通过双目匹配算法形成一张新的深度图
+\item 融合上相机对齐后的深度图、下相机对齐后的深度图和双目匹配得到的深度图
 \end{itemize}
 将深度图与彩色图对齐，相对来讲实现还是比较简单的，对齐深度图的具体流程如算法\ref{alg:align}所示。
 \begin{algorithm}[!ht]
@@ -257,9 +259,39 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
     }
   }
 \end{algorithm}
-算法\ref{alg:align}主要将深度图中每个点的图像坐标利用该点的深度信息反投影变换到实际三维空间中一点，然后将该点坐标变换到彩色相机坐标系下，最后通过彩色相机的内参将该点在彩色相机坐标系下的三维坐标投影变换到彩色图像上的二维坐标。实际对齐三张深度图时，对于左相机深度图对齐到左相机彩色图，需要分别知道左相机深度相机和彩色相机的内参和畸变参数以及深度相机与彩色相机之间的齐次变换关系（通过相机标定这些参数都可以得到）；双目匹配得到的深度图本来就以及与左相机彩色图对齐，因此无需再对齐；对齐右相机到左相机彩色图，除了要知道右相机标定的参数外，还需要知道右相机与左相机之间的其次变换关系（通过对偶RGB-D相机的标定得到）。
+算法\ref{alg:align}主要将深度图中每个点的图像坐标利用该点的深度信息反投影变换到实际三维空间中一点，然后将该点坐标变换到彩色相机坐标系下，最后通过彩色相机的内参将该点在彩色相机坐标系下的三维坐标投影变换到彩色图像上的二维坐标。实际对齐三张深度图时，对于上相机深度图对齐到上相机彩色图，需要分别知道上相机深度相机和彩色相机的内参和畸变参数以及深度相机与彩色相机之间的齐次变换关系（通过相机标定这些参数都可以得到）；双目匹配得到的深度图理论上可以有两张，一张与上相机校准后的彩色图像对齐，另一张与下相机校准后的彩色图像对齐，简单起见，选择与上相机对齐的深度图，然后通过上相机校准所使用的旋转矩阵的逆矩阵即可得到与原上相机彩色图像对齐的深度图；对齐下相机到上相机彩色图，除了要知道下相机标定的参数外，还需要知道下相机与上相机之间的齐次变换关系（通过对偶RGB-D相机的标定得到）。
 
-融合左相机对齐后的深度图、右相机对齐后的深度图以及双目匹配得到的深度这三张深度图的算法首先做的是分别对这三张深度图进行预处理，填补一些深度缺失的像素，因为对齐后的深度图和双目匹配得到的深度图深度信息都有细微的缺失，填补深度信息缺失的方法如算法\ref{alg:fill_hole}所示。
+利用上下相机采集到的两张彩色图获取深度信息主要分为三步：
+\begin{itemize}
+\item 分别对两张原始图像进行校准
+\item 在校准后的两张图像上通过匹配算法得到视差图
+\item 通过视差图获取深度图
+\end{itemize}
+对两张原始图像进行校准主要通过双目相机的标定实现，使得校准后的两张图像的极线对齐，如图\ref{fig:stereo_images}所示，
+\begin{figure}[!ht]
+  \centering
+  \subfloat[上相机原始图像]{\includegraphics[width=7cm]{left_raw_image}}
+  \hfill
+  \subfloat[上相机校准后图像]{\includegraphics[width=7cm]{left_rectified_image}}
+  \vfill
+  \subfloat[下相机原始图像]{\includegraphics[width=7cm]{right_raw_image}}
+  \hfill
+  \subfloat[下相机校准后图像]{\includegraphics[width=7cm]{right_rectified_image}}
+  \caption{双目相机原始图像和校准后图像}
+  \label{fig:stereo_images}
+\end{figure}
+其中绿色的直线便是图像对齐后的部分极线，可以看出校准后的图像的对应点都分布在对齐的极线上（如图中用红色圈出的一对对应点所示），这样使得双目的匹配算法的搜索从二维缩小到了一维，只需要在极线上找对应点即可，能更快更稳定地在两张图中找到对应点。双目匹配算法使用的是ELSA算法\cite{Geiger2010}，通过ELSA算法可以从两张校准后彩色图像上得到对应的视差图，视差图到深度图的变化可以通过公式\ref{eq:reprojection}得到：
+\begin{equation}
+  \label{eq:reprojection}
+  z = \frac{\prescript{\{T,\,R\}}{}{f}B}{-(\prescript{\{T,\,R\}}{}{v_0}-\prescript{\{B,\,R\}}{}{v_0}) + \prescript{\{T,\,R\}}{}{d}}
+\end{equation}
+其中上标\{$T,R$\}（Top,RGB）表示上相机的RGB摄像头，\{$B,R$\}（Bottom,RGB）表示下相机的RGB摄像头，$B$表示基线长度，$\prescript{\{T,\,R\}}{}{d}$表示视差。一般地，会人为地校准过程中使得$\prescript{\{T,\,R\}}{}{v_0}-\prescript{\{B,\,R\}}{}{v_0}=0$，从而公式\ref{eq:reprojection}可以简化为：
+\begin{equation}
+  \label{eq:reprojection_simple}
+  z = \frac{\prescript{\{T,\,R\}}{}{f}B}{\prescript{\{T,\,R\}}{}{d}}
+\end{equation}
+
+融合上相机对齐后的深度图、下相机对齐后的深度图以及双目匹配得到的深度这三张深度图的算法首先做的是分别对这三张深度图进行预处理，填补一些深度缺失的像素，因为对齐后的深度图和双目匹配得到的深度图深度信息都有细微的缺失，填补深度信息缺失的方法如算法\ref{alg:fill_hole}所示。
 \begin{algorithm}[!ht]
   \caption{Fill Holes in Depth Frame}
   \label{alg:fill_hole}
@@ -295,7 +327,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 算法\ref{alg:fill_hole}主要实现对于深度缺失的点，将检查其周围的深度信息，当其四个角上都有有效的深度信息时，并且周围有效深度信息的极值小于一定阈值时，会用周围有效深度信息的均值填充该缺失的点。实际的效果如图\ref{fig:fill_hole}所示。
 \begin{figure}[!ht]
   \centering
-  % @TODO:
+  % @TODO: fill hole 效果图
   \caption{填补深度信息缺失算法效果图}
   \label{fig:fill_hole}
 \end{figure}
@@ -304,7 +336,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
   \label{eq:linear}
   d_{fuse} = \frac{w_1d_{left} + w_2d_{right}+w_3d_{stereo}}{w_1+w_2+w_3}
 \end{equation}
-其中$w_1,w_2,w_3$分别表示左相机深度、右相机深度以及双目匹配深度的权重，SR300相机得到深度的精度比双目计算得到的深度要高，所以实际使用时$w_1,w_2$要比$w_3$大许多。融合三张深度图的理论相对简单，但实际上，三张深度图的深度信息并非都会永远有效，因此根据实际情况实际的融合算法如\ref{alg:fuse}所示。
+其中$w_1,w_2,w_3$分别表示上相机深度、下相机深度以及双目匹配深度的权重，SR300相机得到深度的精度比双目计算得到的深度要高，所以实际使用时$w_1,w_2$要比$w_3$大许多。融合三张深度图的理论相对简单，但实际上，三张深度图的深度信息并非都会永远有效，因此根据实际情况实际的融合算法如\ref{alg:fuse}所示。
 \begin{algorithm}[!ht]
   \caption{Fuse Depth Frames}
   \label{alg:fuse}
@@ -348,9 +380,66 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 算法\ref{alg:fuse}不仅考虑了深度缺失的情况，对于深度信息差值过大的情况也进行了处理。实际处理的效果如图\ref{fig:fuse}所示。
 \begin{figure}[!ht]
   \centering
-  % @TODO
+  % @TODO 深度融合算法效果图
   \caption{深度融合算法效果图}
   \label{fig:fuse}
 \end{figure}
 
-\subsection{对偶RGB-D相机的标定}
+\subsection{对偶RGB-D相机的标定流程}
+对偶RGB-D相机的标定流程可以分为三步：
+\begin{enumerate}[Step 1]
+\item 分别标定好单个RGB-D相机
+\item 标定出两个彩色相机之间的齐次变换关系
+\item 标定出矫正彩色图像的旋转矩阵以及矫正后图像的投影矩阵
+\end{enumerate}
+单个RGB-D相机的标定在\ref{sec:rgb-d_calibration}小节中已经详细叙述过了，分别标定完单个RGB-D相机后，后面的步骤其实就等价于双目标定了。双目的几何结构如图\ref{fig:stereo}所示，
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=14cm]{stereo}
+  \caption{双目几何结构}
+  \label{fig:stereo}
+\end{figure}
+标定出两个彩色相机之间的齐次变换关系，即图\ref{fig:stereo}中的$H$，简单地可以通过8点法\cite{Sur2008}先求出基础矩阵（Fundamental Matrix）$F$，即所谓的“弱标定”，然后根据相机的内参矩阵可求得本质矩阵（Essential Matrix）$E$：
+\begin{equation}
+  E = K^{T}FK'
+\end{equation}
+其中$K$和$K'$分别是两个相机的内参矩阵。求得本质矩阵后可以通过奇异值分解求得齐次变换矩阵的旋转矩阵$R$和平移向量$T$：
+\begin{equation}
+  \left\{\begin{array}{ccc}
+    E &=& U\Sigma V^T \\
+    R &=& U\bm{R}_Z^T(\frac{\pi}{2})V^T \\
+    \left[T\right]_{\times} &=& U\bm{R}_Z^T(\frac{\pi}{2})\Sigma U^T
+  \end{array}
+  \right.
+\end{equation}
+其中$\bm{R}_Z(\theta)$表示绕$Z$轴旋转$\theta$角的旋转矩阵，$\left[T\right]_{\times}$的定义如下：
+\begin{equation}
+  \left[T\right]_{\times} = \left[
+    \begin{array}{ccc}
+      0&-T_z&T_y\\
+      T_z&0&-T_x \\
+      -T_y&T_x&0
+    \end{array}
+  \right]
+\end{equation}
+矫正彩色图像的旋转矩阵会将图\ref{fig:stereo}中黑色线框的图像平面变换到红色线框的图像平面上，使得对应点在两张图像的同一条极线上。矫正彩色图像的旋转矩阵的计算参考文献\cite{Loop2001}，此步标定完最终可以得到：
+\begin{itemize}
+\item 两个相机的矫正旋转矩阵$R_1$，$R_2$
+\item 两个矫正坐标系下的投影矩阵$P_1$，$P_2$
+\item 主相机\footnote{另外一个相机的投影变换矩阵也可以得到，但没有必要。}的投影变换矩阵$Q$
+\end{itemize}
+其中
+\begin{equation}
+  Q = \left[
+    \begin{array}{cccc}
+      1&0&0&-u_0 \\
+       0&1&0&-v_0 \\
+       0&0&0&f \\
+       0&0&1/B&0
+    \end{array}
+    \right]
+\end{equation}
+包含了公式\ref{eq:reprojection_simple}由视差计算深度的所有参数。
+
+\section{RGB-D相机精度测量实验}
+% @TODO: 精度测量实验
