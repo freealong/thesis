@@ -54,7 +54,7 @@ Faster R-CNN的由两个核心模块构成：
 TODO：更详细的介绍?
 
 \subsection{HHA}
-有了与彩色图对应的深度图，如何有效地利用深度图是一个值得思考的问题。从2012年AlexNet\cite{Krizhevsky2012}在ImageNet\cite{imagenet}数据集上的应用开始，深度学习在计算机视觉领域其准确率相比传统方法有了一个很大的提升，因此，本文考虑通过深度学习的方法结合深度图和彩色图进行目标检测。深度学习在彩色图上的应用已经相当成熟，但对于深度图的应用还比较少，如何使用CNN在深度图上提取特征也是一个值得探讨的问题，是将深度图直接作为一个通道使用CNN提取特征？还是将深度图变换到三维坐标（x，y，z），然后再在这三个通道上通过CNN提取特征？经过实验和相关调研，发现将深度图转换为HHA图后进行训练的模型有较高的准确率\cite{Gupta2014}，因此本文将深度图转换为HHA三个通道，然后再通过CNN提取特征。HHA三个通分别为：
+有了与彩色图对应的深度图，如何有效地利用深度图是一个值得思考的问题。从2012年AlexNet\cite{Krizhevsky2012}在ImageNet\cite{imagenet}数据集上的应用开始，深度学习在计算机视觉领域其准确率相比传统方法有了一个很大的提升，因此，本文考虑通过深度学习的方法结合深度图和彩色图进行目标检测。深度学习在彩色图上的应用已经相当成熟，但对于深度图的应用还比较少，如何使用CNN在深度图上提取特征也是一个值得探讨的问题，是将深度图直接作为一个通道使用CNN提取特征？还是将深度图变换到三维坐标（x，y，z），然后再在这三个通道上通过CNN提取特征？经过实验和相关调研，发现将深度图转换为HHA图后进行训练的模型有较高的准确率\cite{Gupta2014}，因此本文将深度图转换为HHA三个通道，然后再通过CNN提取特征。HHA三个通道分别为：
 \begin{itemize}
 \item 水平方向上视差（Horizontal disparity）
 \item 距离地面的高度（Height above ground）
@@ -89,24 +89,128 @@ TODO：更详细的介绍?
   }
 \end{algorithm}
 
-\textbf{Angle with gravity:}法向量与重力的夹角的计算相对来说稍微复杂一点，重力的方向在工作区间内一般与所设的世界坐标系的$z$轴负方向相同，因此原问题就是求法向量与世界坐标系$z$轴负方向之间的夹角。参考文献\cite{Gupta2013}，首先计算深度图中每个点上的法向量，具体如算法\ref{alg:normal}所示。
+\textbf{Angle with gravity:}法向量与重力的夹角的计算相对来说稍微复杂一点，重力的方向在工作区间内一般与所设的世界坐标系的$z$轴负方向相同，因此原问题就是求法向量与世界坐标系$z$轴负方向之间的夹角。参考文献\cite{Gupta2013}，首先计算深度图中每个点上的法向量，计算点云中一点$p_0$的法向量$\vec{n}$的简单思路如下：
+\begin{itemize}
+\item 找出距离点$p_0$最近的$k$个点：$p_1, p_2,...p_k$
+\item 通过最小二乘在点$\{p_i|i = 0, 1, \ldots , k\}$中拟合出平面$Ax + By + Cz + D = 0$
+\item 点$p_0$的法向量$\vec{n} = [A, B, C]^T$
+\end{itemize}
+考虑到所采集的深度图转换的点云是有序的（Organized Point Cloud），意味着坐标索引相近的点实际物理距离也相近，因此找出距离点$p_0$最近的$k$个点可以通过选取点$p_0$坐标索引附近的点代替，具体地，记点$p_0$在深度图中图像坐标为$(x_0, y_0)$，取点集$\bm{S} = \{p_i|x_0 - R \leq x_i \leq x_0 + R , y_0 -R \leq y_i \leq y_0 + R\}$，其中$R$是选取区域的半径。得到法向量后计算法向量与世界坐标$z$轴负方向的角度就十分简单了，整个计算法向量与重力的夹角的算法如\ref{alg:angle}所示。
 \begin{algorithm}[!ht]
-  \caption{计算法向量}
-  \label{alg:normal}
-  todo: normal algorithm\;
+  \caption{计算法向量与重力的夹角}
+  \label{alg:angle}
   \KwIn{Point Cloud $P_{h\times w}$}
-  \KwOut{Hight Frame $H_{h\times w}$}
+  \KwOut{Angle Frame $A_{h\times w}$}
   \For {$y\leftarrow 1$ \KwTo $h$} {
     \For {$x\leftarrow 1$ \KwTo $w$} {
-      $p =  \prescript{W}{C}{R}P[y, x] + \prescript{W}{C}{T}$\;
-      $H[y, x] = p.z$\;
+      Calculate surface normal $\prescript{C}{}{\vec{n}}$ at point $P[y,x]$\;
+      $\prescript{W}{}{\vec{n}} =  \prescript{W}{C}{R}\prescript{C}{}{\vec{n}} + \prescript{W}{C}{T}$\;
+      $A[y, x] = arccos(-(\vec{n}\cdot\vec{oz}) / (|\vec{n}||\vec{oz}|))$\;
     }
   }
 \end{algorithm}
 
-
+计算完上述HHA三个通道后，为了计算和存储方便，分别将三个通道的值线性变换到0到255之间，可视化如图\ref{fig:hha}所示。
+\begin{figure}
+  \centering
+  \subfloat[Depth frame]{\includegraphics[width=4.5cm]{depth_frame}}
+  \hskip5em
+  \subfloat[HHA Frame]{\includegraphics[width=4.5cm]{hha_frame}}
+  \vfill
+  \subfloat[Horizontal disparity frame]{\includegraphics[width=4.5cm]{disparity_frame}}
+  \hfill
+  \subfloat[Height above ground frame]{\includegraphics[width=4.5cm]{height_frame}}
+  \hfill
+  \subfloat[Angle with gravity frame]{\includegraphics[width=4.5cm]{angle_frame}}
+  \caption{HHA可视化效果图}
+  \label{fig:hha}
+\end{figure}
 
 \subsection{Spatial Transformer}
+Spatial Transformer是一个可微模块，根据输入的特征对其进行相应的空间变化，输出变换后的特征，如图\ref{fig:spatial_transformer_results}所示，
+\begin{figure}
+  \centering
+  todo: spatial transformer results
+  \caption{Spatial Transformer效果图}
+  \label{fig:spatial_transformer_results}
+\end{figure}
+输入特征$U$经过Spatial Transformer模块后输出特征$V$。Spatial Transformer模块具体可以分为三个部分，如图\ref{fig:spatial_transformer}。
+\begin{figure}
+  \centering
+  todo: spatial transformer
+  \caption{Spatial Transformer结构图}
+  \label{fig:spatial_transformer}
+\end{figure}
+简单来讲，第一部分是一个定位网络（localisation network)，输入特征$U$，输出需要进行空间变换的参数；第二部分是一个网格生成器（grid generator），根据空间变换的参数生成输入特征中需要变换的点的网格；第三部分是个采样器，根据网格生成器的输出对输入特征进行采样并进行空间变换，生成输出特征。
+
+具体地，记定位网络的输入为特征$U\in \mathbb{R}^{H\times W\times C}$，其中$W,H,C$分别为长、宽和通道数，网络的输出为空间变化$\mathcal{T}_{\theta}$的参数$\theta$，参数$\theta$的个数由空间变换的类型决定，本文所采用的空间变换为2D仿射变换，则
+\begin{equation}
+  \mathcal{T}_\theta = \left[
+    \begin{array}{ccc}
+      \theta_{11}&\theta_{12}&\theta_{13}\\
+      \theta_{21}&\theta_{22}&\theta_{23}
+    \end{array}
+    \right]
+\end{equation}
+定位网络内部可以由一些全连接层或者卷积层再加一个回归层组成。
+
+网格生成器本质上就是在输入特征中选取需要进行空间变化的点，如图\ref{fig:spatial_transfomer_results}中绿色点便是网格生成器所选取的点，记Spatial Transformer的输出特征为$V\in \mathbb{R}^{H'\times W'\times C}$，其中$W',H',C$分别为输出特征的长、宽和通道数，输出特征的通道数和输入特征的通道数相同，不能改变，并且空间变换$\mathcal{T}_{\theta}$将分别作用于输入$U$的各个通道以保证每个通道上的变换一致。并记点集$G = \{G_i|G_i = (x^t_i, y^t_i)\}$，其中$(x_i^s, y_i^s)$为输出特征图中点的坐标，由定位网络输出的参数$\theta$和$G$我们就可以在输入特征中确定需要进行空间变换的点的集合$\mathcal{T}_\theta(G)$：
+\begin{equation}
+  \left(
+    \begin{array}{c}
+      x_i^s\\
+      y_i^s
+    \end{array}
+  \right) = \mathcal{T}_\theta(G_i) =
+  \left[
+    \begin{array}{ccc}
+    \theta_{11}&\theta_{12}&\theta_{13}\\
+    \theta_{21}&\theta_{22}&\theta_{23}
+    \end{array}
+  \right]
+  \left(
+    \begin{array}{c}
+      x_i^t\\
+      y_i^t\\
+      1\\
+    \end{array}
+  \right)
+\end{equation}
+其中$(x_i^s, y_i^s)$是输入特征中点的坐标，也是图\ref{fig:spatial_transfomer_result}中的绿色点。
+
+采样器输入网格生成器生成的点集$\mathcal{T}_\theta$，和输入特征$U$，最终输出经过空间变换后的特征$V$，具体如公式\ref{eq:sampler}所示：
+\begin{equation}
+  \label{eq:sampler}
+  V_i^c = \sum_n^H\sum_m^W{U_{nm}^ck(x_i^s-m;\Phi_x)k(y_i^s-n;\Phi_y)}\quad \forall i\in[1\ldots H'W']\quad \forall c\in[1\ldots C]
+\end{equation}
+其中$\Phi_{x}$和$\Phi_{y}$是采样核函数$k()$的参数，$U_{nm}^c$表示输入特征$U$在坐标$(n, m)$下第$c$个通道上的值，$V_i^c$表示输出特征在坐标$(x_i^t,y_i^t)$下第$c$个通道上的值。理论上可以使用任何采样核函数，只要可以对$x_i^s$和$y_i^s$求导，因为网络训练需要对公式\ref{eq:sampler}求导。以双线性采样核函数为例，公式\ref{eq:sampler}变为
+\begin{equation}
+  V_i^c = \sum_n^H\sum_m^W{U_{nm}^cmax(0, 1-|x_i^s-m|)max(0, 1-|y_i^s-n|)}
+\end{equation}
+则$V$对$U$和$G$的梯度为
+\begin{equation}
+  \frac{\partial V_i^c}{\partial U_{nm}^c} = \sum_n^H\sum_m^W{max(0, 1-|x_i^s-m|)max(0, 1-|y_i^s-n|)}
+\end{equation}
+\begin{equation}
+  \frac{\partial V_i^c}{\partial x_i^s} = \sum_n^H\sum_m^W{U_{nm}^cmax(0, 1-|y_i^s-n|)}
+  \left\{
+      \begin{array}{ll}
+        0&if|m-x_i^s| \geq 1\\
+        1&if m \geq x_i^s\\
+        -1&if m < x_i^s
+      \end{array}
+    \right.
+\end{equation}
+\begin{equation}
+  \frac{\partial V_i^c}{\partial y_i^s} = \sum_n^H\sum_m^W{U_{nm}^cmax(0, 1-|x_i^s-m|)}
+  \left\{
+      \begin{array}{ll}
+        0&if|n-y_i^s| \geq 1\\
+        1&if n \geq y_i^s\\
+        -1&if n < y_i^s
+      \end{array}
+    \right.
+\end{equation}
 
 
 \section{3D Mask RCNN}
