@@ -1,4 +1,3 @@
-%!TEX root = ../thesis.tex
 \chapter{RGB-D图像的获取与融合}
 \label{chap:rgbd}
 
@@ -22,7 +21,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=12cm]{sr300}
+  \includegraphics[width=12cm]{fig/sr300}
   \caption{Realsense SR300内部结构图}
   \label{fig:sr300}
 \end{figure}
@@ -442,8 +441,18 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 \end{equation}
 包含了公式\ref{eq:reprojection_simple}由视差计算深度的所有参数。
 
-\section{RGB-D相机精度测量实验}
-% @TODO: 精度测量实验
+\section{深度图质量测试实验}
+RGB-D相机相对于彩色图我们更关心其深度图的质量，因此设计实验测试了所采用的SR300相机深度图的质量以及改进的由两个SR300相机所组成的对偶RGB-D相机深度图的质量。所设计的实验通过考察以下三个指标来评价相机深度图的质量：
+\begin{itemize}
+\item 深度信息的精度
+\item 深度信息的噪声
+\item 深度信息的有效率
+\end{itemize}
 
 \section{本章小结}
 % @TODO: 本章小结
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End:

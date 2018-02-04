@@ -1,4 +1,3 @@
-%!TEX root = ../thesis.tex
 \chapter{基于RGB-D图像的目标检测算法}
 \label{chap:detector}
 本章主要介绍所提出的两种基于RGB-D图像的目标检测算法3D Faster R-CNN和3D Mask R-CNN。3D Faster R-CNN是在Faster R-CNN\cite{Ren}的基础上，通过引入深度图以解决单从RGB图难以检测缺少纹理物体（Textureless Object）的问题，并且还引入了Spatial Transformer结构使得提取的特征具有旋转不变性。由于3D Faster R-CNN目标检测的结果是框出目标的Bounding Box，因此使得一些框住细长目标的Bounding Box内大部分像素并不属于该目标，这就使得后面的点云匹配算法难以得到满意的结果。因此3D Mask R-CNN根据Mask R-CNN\cite{He2017}对Faster R-CNN的改进思路，对3D Faster R-CNN进行了改进，使得其不仅能得到目标的Bounding Box，还能得到目标的Mask（可以知道Bounding Box内属于检测目标的像素），大大减少了后续匹配算法的难度。
@@ -219,3 +218,8 @@ Spatial Transformer是一个可微模块，根据输入的特征对其进行相�
 
 \section{本章小结}
 
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End:
