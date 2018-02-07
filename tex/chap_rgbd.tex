@@ -1,8 +1,39 @@
 \chapter{RGB-D图像的获取与融合}
 \label{chap:rgbd}
+RGB-D图像是所设计的三维物体识别算法的输入，其质量对算法结果有着至关重要的影响，以此获取高质量的RGB-D图像也十分重要。本章首先分析了3D相机的现状，然后详细介绍了选取的RGB-D相机的原理和标定流程，并且针对其缺点提出了对偶RGB-D相机结构，最后通过实验证明了对偶RGB-D相机可以获取更高质量的RGB-D图像。
 
 \section{3D相机现状与分析}
-% @TODO: 3d相机现状
+3D相机能够获取相机到物体表面每一点的距离，从而感知物体的形状和距离，近几年3D成像技术的应用越来越多，如用于体感游戏的Kinect\cite{kinect}，Google的Project Tango\cite{tango}，以及Apple公司的iPhone X前置摄像头的人脸识别。
+
+目前市面上的3D相机要么价格昂贵，要么精度低下，很难找到一款性价比较高的3D相机。
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{cccc}
+    \toprule
+    品牌&价格&精度&速度 \\
+    \midrule
+    SICK&大于30万&高&很慢 \\
+    Enshape&大于30万&高&较快 \\
+    Ensenso&约10万&较高&较快 \\
+    Realsense&约1.5千&中等&快 \\
+    Kinect V2&约1.5千&低&快\\
+    \bottomrule
+  \end{tabular}
+  \caption{市面上主要3D相机价格和性能}
+  \label{tab:3d_camera}
+\end{table}
+\begin{figure}[ht]
+  \centering
+  \subfloat[SICK]{\includegraphics[width=3cm]{sick}}
+  \subfloat[Enshape]{\includegraphics[width=3cm]{enshape}}
+  \subfloat[Ensenso]{\includegraphics[width=3cm]{ensenso}}
+  \subfloat[Realsense]{\includegraphics[width=3cm]{realsense}}
+  \subfloat[Kinect V2]{\includegraphics[width=3cm]{kinect}}
+  \caption{市面上主要3D相机}
+  \label{fig:3d_camera}
+\end{figure}
+如表\ref{tab:3d_camera}和图\ref{fig:3d_camera}所示，列举了一些市面上较为常见的3D相机，从表中可以发现很多精度高的3D相机价格及其昂贵，并且采集速度很慢，价格低的3D相机精度有相对较低。出于实际应用考虑，我们需要相机的采集速度相对较快，再加上成本上的限制，最终选择了精度中等、采集速度较快、价格较为便宜的Realsense系列相机。
+
 
 \section{RGB-D相机}
 \subsection{RGB-D相机原理与结构}
@@ -13,7 +44,7 @@ RGB-D相机获取深度的原理大致可以分为三种：
 \item Stereo
 \end{itemize}
 
-% @TODO: 加些原理图?
+% @improve: 加些原理图?
 Structure Light获取深度信息的原理是通过激光发射器投射带有特定编码的结构光到物体表面后，由IR Camera采集，根据采集到的光信号量的变化来计算物体的深度。举一个形象的例子，将手电筒照向墙面，手电筒离墙面越远，墙面上所形成的光斑的直径就越大，所以可以通过光斑的直径来计算手电筒距离墙面的距离。ToF获取深度信息的原理是通过专有的传感器捕捉红外光发射到接收的飞行时间来计算物体的深度。Stereo是通过双摄像头拍摄物体，再通过特征点匹配，根据三角测量原理来计算物体的深度。
 
 三种原理的深度相机各有其特点，采用Structure Light原理的深度相机一般精度比较高，但景深比较短并且受光线影响比较大，适合室内场景；ToF原理的深度相机获取深度图的精度和分辨率一般都比较低，但帧率高，并且具有一定的抗光照性能；Stereo获取深度精度适中，帧率相对来说较低，并且需要较强的计算性能，但抗光照能力强，适合室外场景。
@@ -21,7 +52,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。
 \begin{figure}[!ht]
   \centering
-  \includegraphics[width=12cm]{fig/sr300}
+  \includegraphics[width=12cm]{sr300}
   \caption{Realsense SR300内部结构图}
   \label{fig:sr300}
 \end{figure}
@@ -37,11 +68,13 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 其中当Infrared Laser Projector投射带有编码的结构光时，Infrared Camera可以获取深度图；当投射不带编码的红外光时，Infrared Camera可以获取红外成像图。正常使用时，往往设置Infrared Laser Projector投射带有编码的结构光来获取深度信息。因此，从RGB-D相机的使用来看，可以忽略其内部具体结构，将其看成由一个彩色摄像头和一个深度摄像头构成，其中彩色摄像获取彩色（RGB）信息，深度摄像头获取深度（depth）信息。
 
 \subsection{RGB-D相机的数学模型}
+% @improve: actually, color and depth's distortion model are different.
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=8cm]{rgbd_model}
   \caption{RGB-D相机模型}
   \label{fig:rgbd_model}
+  % @improve: draw the figure use tikz
 \end{figure}
 图\ref{fig:rgbd_model}展示了本文所使用的RGB-D相机的基本物理模型，其中彩色摄像头和深度摄像头都使用了针孔(pin-hole)相机模型\cite{Heikkila2000}。
 先考虑普通针孔相机的模型，相机图像坐标系下一点$\bm{u}:=[u,v]^T$，对应的三维世界中的一点在相机坐标系下表示为$\bm{X}:=[x,y,z]^T$。根据针孔相机模型有：
@@ -442,15 +475,78 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 包含了公式\ref{eq:reprojection_simple}由视差计算深度的所有参数。
 
 \section{深度图质量测试实验}
-RGB-D相机相对于彩色图我们更关心其深度图的质量，因此设计实验测试了所采用的SR300相机深度图的质量以及改进的由两个SR300相机所组成的对偶RGB-D相机深度图的质量。所设计的实验通过考察以下三个指标来评价相机深度图的质量：
+RGB-D相机相对于彩色图我们更关心其深度图的质量，因此设计实验测试了所采用的SR300相机深度图的质量以及改进的由两个SR300相机所组成的对偶RGB-D相机深度图的质量。通过实验，主要考察相机采集的深度在不同距离下的填充率、精度和噪声这三个指标。实验器材除了测试所用的相机，还需要沿固定方向运动的导轨，以及固定在导轨上的平板，相机通过采集平板上的深度信息来计算填充率、精度和噪声这三个指标。实际实验时，由于实验室没有沿固定方向运动的导轨，但是有六轴机械臂，所以将平板固定在机械臂末端，然后通过机械臂示教器控制机械臂末端沿固定方向移动，并且移动的距离可在示教器上读出，整个实验装置如图\ref{fig:depth_exp_env}所示。
+\begin{figure}
+  \centering
+  TODO 深度测试实验装置图
+  \caption{深度测试实验装置}
+  \label{fig:depth_exp_env}
+\end{figure}
+
+\subsection{实验流程}
+实验流程示意图如图\ref{fig:depth_exp_steps}所示，
+\begin{figure}
+  \centering
+  \includegraphics[]{depth_exp_steps}
+  \caption{实验流程图}
+  \label{fig:depth_exp_steps}
+\end{figure}
+其中$z_c$是相机坐标系的$z$轴方向，$z_r$是机械臂末端运动方向，也是平板运动方向，$z_b$是垂直于平板的方向，$D_i:=\{d_1,d_2,…,d_{n_i}\}$是相机采集到平板的深度信息。具体实验步骤如下：
 \begin{itemize}
-\item 深度信息的精度
-\item 深度信息的噪声
-\item 深度信息的有效率
+\item 固定机械臂和相机，通过手眼标定(具体见\ref{sec:hand_eye}小节）得到相机坐标系和机器人坐标系之间的齐次变换关系
+\item 固定平板到机械臂末端
+\item 通过相机采集平板的深度信息$D_0$，记录此时示教器上机械臂末端在机器人坐标系$z$轴上的值$r_0$
+\item 控制机械臂示教器使机械臂末端沿机器人坐标系$z$轴运动，分别记录此时平板的深度信息$D_i$和机械臂末端位置在$z$方向上的值$r_i$
+\item 重复上述步骤，直到采集满$n$组数据
 \end{itemize}
 
+\subsection{实验原理}
+通过上述实验步骤采集完数据后，需要计算深度信息的填充率、精度和噪声这三个指标，下面分别介绍这三个指标的定义和计算方式。
+
+\emph{填充率}表示深度图中有效深度信息的百分比，计算相对简单，首先在采集到的深度图中拟合出平板的平面方程$\theta_i^T\bar{p}=0$，其中$\theta_i := [\theta_i(1), \theta_i(2), \theta_i(3), \theta_i(4)]$为平面方程参数，然后通过深度图中每个像素到平面的距离确定平板在深度图中的闭合区域。定义像素表示的点到平面的距离小于规定的阈值$\delta$时该像素深度信息有效，最后统计在该闭合区域中像素的总点数$M_i$和有效深度信息的像素点个数$M_i'$，则第$i$组数据测得的填充率为
+\begin{equation}
+  FillRate_i = \frac{M_i'}{M_i} \times 100\%
+\end{equation}
+
+\emph{精度}表示深度图测量的深度的精度，定义如下：
+\begin{equation}
+  Precision_i = \frac{|\hat{d}_i-d_i|}{d_i} \times 100\%
+\end{equation}
+其中$\hat{d_i}$表示相机坐标系原点到拟合平面的距离，$d_i$表示相机坐标系原点到实际平板的距离，详细如图\ref{fig:depth_exp_precision}所示。
+\begin{figure}
+  \centering
+  \includegraphics[]{depth_exp_precision}
+  \caption{精度测量原理图}
+  \label{fig:depth_exp_precision}
+\end{figure}
+$\hat{d}_i$的计算相对简单，根据$D_i$中拟合出相机坐标系下平板的平面方程的参数$\Theta_i$，容易得到
+\begin{equation}
+  \hat{d}_i = -\frac{\theta_i(4)}{\theta_i(3)}
+\end{equation}
+为了获得实际平板的与相机坐标系的原点的距离，首先以$D_0$平面为基准，将其沿机器人坐标系$z$轴方向移动$r_i-r_0$，得到新的平面方程$\theta'_i$，则
+\begin{equation}
+  d_i = -\frac{\theta_i'(4)}{\theta_i'(3)}
+\end{equation}
+% @improve: equations above can be more specific.
+
+\emph{噪声}定义为平板闭合区域内点距离平面拟合方程的距离的均方根(RMS)：
+\begin{equation}
+  Noise_i = \sqrt{\frac{1}{J}\sum_{j=1}^J{\delta_j^2}}
+\end{equation}
+其中$\delta_j$为点到拟合平面的距离。
+
+\subsection{实验结果}
+实验分别对SR300和对偶RGB-D相机在平板距离相机0.2到1.2m范围内采集了$1 + 19$组数据，测得每组数据深度信息的三个指标，如图\ref{fig:depth_exp_res}所示。
+\begin{figure}
+  \centering
+  % @TODO：sr300 and dual-rgb-d camera's fill rate, precision, nosie plot
+  \caption{深度图质量测试实验结果}
+  \label{fig:depth_exp_res}
+\end{figure}
+从图\ref{fig:depth_exp_res}可以看出，随着距离的增加，深度相机的填充率、精度下降，噪声增加。所设计的对偶RGB-D相机相比SR300相机有更高的填充率，与设计时的初衷一致，毕竟结合了两个相机的深度信息，理论上深度信息的填充率就应该有所增加；对偶RGB-D相机的精度与SR300相机相比没有太显著的提升，但噪声有着明显的下降。综上可以得出对偶RGB-D相机所采集的深度图相比单个RGB-D相机有着更高的填充率、更低的噪声，深度图的质量更好。
+
 \section{本章小结}
-% @TODO: 本章小结
+本章首先介绍了RGB-D相机的现状，然后详细介绍了以结构光为原理的RGB-D相机SR300的原理以及标定方法，针对SR300对于反光物体深度信息缺失的情况，通过组合两个RGB-D相机构成对偶RGB-D相机实现采集高质量的深度图，并给出了对偶RGB-D相机的标定流程。最后设计了深度图质量测试的实验，证明了对偶RGB-D相机比单个RGB-D相机有更高的填充率，更低的噪声。
 
 %%% Local Variables:
 %%% mode: latex
