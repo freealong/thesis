@@ -4,9 +4,10 @@
 
 \section{3D Faster R-CNN}
 3D Faster R-CNN算法的整体结构如图\ref{fig:3d_faster_rcnn}所示。
-\begin{figure}
+\begin{figure}[ht]
   \centering
-  todo：figure of 3d faster rcnn
+  % @improve: more specific
+  \includegraphics[width=14cm]{3dfaster_rcnn_frame}
   \caption{3D Faster R-CNN结构}
   \label{fig:3d_faster_rcnn}
 \end{figure}
@@ -37,9 +38,10 @@ Data Augmentation是通过对训练集中的图片进行旋转以获取不同角
 
 \subsection{Faster R-CNN}
 为了更好地介绍所提出的3D Faster RCNN算法，先回顾一下Faster R-CNN算法。Faster R-CNN的网络结构如图\ref{fig:faster_rcnn}所示，
-\begin{figure}
+\begin{figure}[ht]
   \centering
-  todo: faster rcnn 结构
+  % @improve: more specific
+  \includegraphics[width=14cm]{faster_rcnn_frame}
   \caption{Faster R-CNN结构}
   \label{fig:faster_rcnn}
 \end{figure}
@@ -49,8 +51,8 @@ Faster R-CNN的由两个核心模块构成：
 \item Fast R-CNN
 \end{itemize}
 整个网络是一个端到端（end-to-end）的目标检测网络，输入图片，输出图片中检测到的目标的类别和Bounding Box。RPN模块输出候选框，形象地说，RPN模块告诉Fast R-CNN模块去哪里检测目标，Fast R-CNN模块输出检测结果。
+% @todo: more specific
 
-TODO：更详细的介绍?
 
 \subsection{HHA}
 有了与彩色图对应的深度图，如何有效地利用深度图是一个值得思考的问题。从2012年AlexNet\cite{Krizhevsky2012}在ImageNet\cite{imagenet}数据集上的应用开始，深度学习在计算机视觉领域其准确率相比传统方法有了一个很大的提升，因此，本文考虑通过深度学习的方法结合深度图和彩色图进行目标检测。深度学习在彩色图上的应用已经相当成熟，但对于深度图的应用还比较少，如何使用CNN在深度图上提取特征也是一个值得探讨的问题，是将深度图直接作为一个通道使用CNN提取特征？还是将深度图变换到三维坐标（x，y，z），然后再在这三个通道上通过CNN提取特征？经过实验和相关调研，发现将深度图转换为HHA图后进行训练的模型有较高的准确率\cite{Gupta2014}，因此本文将深度图转换为HHA三个通道，然后再通过CNN提取特征。HHA三个通道分别为：
@@ -114,7 +116,7 @@ TODO：更详细的介绍?
   \centering
   \subfloat[Depth frame]{\includegraphics[width=4.5cm]{depth_frame}}
   \hskip5em
-  \subfloat[HHA Frame]{\includegraphics[width=4.5cm]{hha_frame}}
+  \subfloat[HHA frame]{\includegraphics[width=4.5cm]{hha_frame}}
   \vfill
   \subfloat[Horizontal disparity frame]{\includegraphics[width=4.5cm]{disparity_frame}}
   \hfill
@@ -127,16 +129,16 @@ TODO：更详细的介绍?
 
 \subsection{Spatial Transformer}
 Spatial Transformer是一个可微模块，根据输入的特征对其进行相应的空间变化，输出变换后的特征，如图\ref{fig:spatial_transformer_results}所示，
-\begin{figure}
+\begin{figure}[ht]
   \centering
-  todo: spatial transformer results
+  \includegraphics[width=6cm]{stn_results}
   \caption{Spatial Transformer效果图}
   \label{fig:spatial_transformer_results}
 \end{figure}
 输入特征$U$经过Spatial Transformer模块后输出特征$V$。Spatial Transformer模块具体可以分为三个部分，如图\ref{fig:spatial_transformer}。
-\begin{figure}
+\begin{figure}[ht]
   \centering
-  todo: spatial transformer
+  \includegraphics[width=12cm]{stn_structure}
   \caption{Spatial Transformer结构图}
   \label{fig:spatial_transformer}
 \end{figure}
@@ -194,9 +196,9 @@ Spatial Transformer是一个可微模块，根据输入的特征对其进行相�
   \frac{\partial V_i^c}{\partial x_i^s} = \sum_n^H\sum_m^W{U_{nm}^cmax(0, 1-|y_i^s-n|)}
   \left\{
       \begin{array}{ll}
-        0&if|m-x_i^s| \geq 1\\
-        1&if m \geq x_i^s\\
-        -1&if m < x_i^s
+        0&if\; |m-x_i^s| \geq 1\\
+        1&if\; m \geq x_i^s\\
+        -1&if\; m < x_i^s
       \end{array}
     \right.
 \end{equation}
@@ -204,16 +206,16 @@ Spatial Transformer是一个可微模块，根据输入的特征对其进行相�
   \frac{\partial V_i^c}{\partial y_i^s} = \sum_n^H\sum_m^W{U_{nm}^cmax(0, 1-|x_i^s-m|)}
   \left\{
       \begin{array}{ll}
-        0&if|n-y_i^s| \geq 1\\
-        1&if n \geq y_i^s\\
-        -1&if n < y_i^s
+        0&if\; |n-y_i^s| \geq 1\\
+        1&if\; n \geq y_i^s\\
+        -1&if\; n < y_i^s
       \end{array}
     \right.
 \end{equation}
 
 
 \section{3D Mask RCNN}
-
+Mask R-CNN相比Faster R-CNN不仅可以输出目标的Class和Bounding Box，还可以输出目标的Mask。Mask R-CNN通过对网络的RoI单独增加一个分支来生成目标的Mask，
 \section{目标检测实验}
 
 \section{本章小结}
