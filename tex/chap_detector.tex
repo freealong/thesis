@@ -217,6 +217,150 @@ Spatial Transformer是一个可微模块，根据输入的特征对其进行相�
 \section{3D Mask RCNN}
 Mask R-CNN相比Faster R-CNN不仅可以输出目标的Class和Bounding Box，还可以输出目标的Mask。Mask R-CNN通过对网络的RoI单独增加一个分支来生成目标的Mask，
 \section{目标检测实验}
+为了评价所设计的3D Faster R-CNN和3d Mask R-CNN算法的性能，分别在一个现有的数据集和一个自己采集的实际应用的数据集上进行了网络的训练和测试，并与原始的Faster R-CNN和Mask R-CNN相比较，验证了所设计算法的性能。
+
+\subsection{数据集}
+实验所采用的数据集一个是参加APC(Amazon Picking Challenge)的MIT-Princeton队伍所采集的数据集"Shelf \& Tote" Benchmark Dataset\cite{apcdataset}，此处简单记为APC数据集，另外一个数据集是实际用于bin-picking在实验室采集的数据集，记为workpiece数据集。
+
+{\kai APC数据集：}该数据集共有39类不同的物体，452个场景，每个场景有不同的物体，一共7281组图片，通过在多个场景下，不同的视角下使用Intel Realsense SR300相机所拍摄。标注的数据是每个场景下物体在世界坐标系下的位姿，以及每个场景下相机在世界坐标系下的位姿，是一个半自动标注的数据集，通过物体的位姿和相机的位姿就可以得到每个物体在相机坐标系下的位姿，数据集中部分数据如图\ref{fig:apc_dataset}所示。
+\begin{figure}[ht]
+  \centering
+  \subfloat{\includegraphics[width=3.5cm]{apc_color1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_color2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_color3}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_color4}}
+  \vfill
+  \subfloat{\includegraphics[width=3.5cm]{apc_depth1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_depth2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_depth3}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{apc_depth4}}
+  \caption{APC数据集部分数据:第一栏为彩色图像，第二栏为与彩色图像相匹配的深度图}
+  \label{fig:apc_dataset}
+\end{figure}
+
+APC数据集中标注的标签可以认为是每个物体在相机坐标系下的位姿和类别，对于设计的算法来说需要的是物体的类别（class）、边界框（bounding box)和掩模（mask），因此需要对原始标注数据进行一些处理，因为APC还提供了每类物体的CAD模型，并且相机的内参矩阵也在数据集中提供了，因此可以将CAD模型转换为点云后齐次变换到所标注的对应物体在相机坐标系下的位姿，然后利用相机内参矩阵将物体点云投影到图像平面，从而获得物体的mask，进而可以得到物体的bounding box。需要注意的是由于一个场景中有多个物体，在不同相机位姿下会出现遮挡，因此需要对被遮挡物体的mask进行相应的裁剪，对于几乎被完全遮挡的物体可以去除，判断物体是否遮挡可以通过物体点云距离相机原点的距离远近判断。将一张图中物体位姿得到mask和boudning box的处理流程如下所示：
+\begin{enumerate}
+\item 对于图中标注的每个物体：
+  \begin{itemize}
+  \item 将对应物体的3D点云变换到物体标注的位姿
+  \item 根据相机内参矩阵将3D点云投影到图像平面，获得物体的mask以及mask对应的深度图depth
+  \end{itemize}
+\item 遍历像素索引i：
+  \begin{itemize}
+  \item 如果在索引i出存在多张mask的值有效，保留depth值最小的mask，将其余mask在索引i处置为无效
+  \end{itemize}
+\item 对于每个物体的mask：
+  \begin{itemize}
+  \item 如果mask中有效像素点小于阈值$T$，删除该mask
+  \item 根据mask有效像素点的坐标计算对应的bounding box
+  \end{itemize}
+\end{enumerate}
+处理后的部分图片的ground truth（class，mask，boudning box）如图\ref{fig:apc_gt}所示。
+\begin{figure}[ht]
+  \centering
+  \subfloat{\includegraphics[width=6cm]{apc_gt1}}
+  \hskip1cm
+  \subfloat{\includegraphics[width=6cm]{apc_gt2}}
+  \vfill
+  \subfloat{\includegraphics[width=6cm]{apc_gt3}}
+  \hskip1cm
+  \subfloat{\includegraphics[width=6cm]{apc_gt4}}
+  \caption{APC数据集部分标注数据}
+  \label{fig:apc_gt}
+\end{figure}
+从图\ref{fig:apc_gt}可以看出处理后的mask基本覆盖了物体，boudning box也正确框出了物体，唯一的缺点是所生成的mask有时候有些缺失，没有人工标注的完美，如图\ref{fig:apc_gt}中第一张图中的瓶子（easter turtle sippy cup）标注的mask有很多缺失，根本原因是所使用的物体的CAD模型是通过相机采集生成的，其转换的3D点云质量并不是十分理想，其3D点云比较稀疏并且有部分缺失，如图\ref{fig:apc_model}所示，这个瓶子的点云有严重的缺失，主要原因是瓶子透明，所以相机难以采集其深度信息。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=10cm]{apc_model1}
+  \caption{easter turtle sippy cup point cloud}
+  \label{fig:apc_model}
+\end{figure}
+模型点云的缺失，因此将点云投影到图像平面生成的mask也有部分缺失，尽管已经对生成的mask进行了一些滤波处理，但部分mask还是有明显的缺失。
+
+总体来说，尽管生成的ground truth的质量没有人工标注的ground truth质量好，但对本实验来说已经够用，并且相比人工标注这种半自动化的标注方式节省了大量时间和金钱成本。
+
+{\kai workpiece数据集：} 该数据集有三类物体，共2k组图片。该数据集与APC数据集最大的不同是，同一张图片中存在大量不同位姿的同种物体，并且三类物体都缺少纹理(textureless)，因此Faster R-CNN和Mask R-CNN在该数据集上的表现理论上应该大大不如3D Faster R-CNN和3D Mask R-CNN。部分数据集中的图片如图\ref{fig:wp_dataset}所示。
+\begin{figure}[ht]
+  \centering
+  % @todo: missing figure
+  \subfloat{\includegraphics[width=3.5cm]{wp_color1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{wp_color2}}
+  \vfill
+  \subfloat{\includegraphics[width=3.5cm]{wp_depth1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{wp_depth2}}
+  \caption{workpiece数据集部分图片}
+  \label{fig:wp_dataset}
+\end{figure}
+workpiece数据集的ground truth由人工标定，其中据测试集中有的ground truth不仅包括了物体的class，mask，bounding box，还有物体的位姿，并且由于三类物体都是工厂中的工件，因此也提供三类物体精确的CAD模型。
+
+\subsection{实验内容}
+实验在APC数据集和workpiece数据集上比较Faster R-CNN和3D Faster R-CNN、Mask R-CNN和3D Mask R-CNN的性能。
+
+{\kai 算法实现}主要通过Tensorflow框架使用python语言实现，详细代码见Github项目地址\footnote{\url{https://github.com/freealong/Mask\_RCNN}}。
+
+{\kai 评价的指标}主要是检测的精确度AP以及算法的时间性能FPS。FPS是每秒能检测的图片数比较好理解，AP是bounding box或者mask交并比的精确度。具体地，如图\ref{fig:iou}所示，
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=8cm]{iou}
+  \caption{bounding box交并比}
+  \label{fig:iou}
+\end{figure}
+两个bounding box的交并比定义为：
+\begin{equation}
+  IoU = \frac{S_1\cap S_2}{S_1\cup S_2}
+\end{equation}
+$AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占总体检测个数的比例，显然定义精度的$IoU$大小会影响最终评价的质量，过小和过大的最小$IoU$都不能很好地反应算法的精缺度，因此将评价的主要精确度定义如下：
+\begin{equation}
+  AP = \frac{1}{10}\sum_{i=0}^{9}{AP_{0.5 + 0.5i}}
+\end{equation}
+检测结果换为mask精确度的定义也类似，只需用mask的交并比代替bounding box的交并比。
+
+{\kai 模型训练}在实验室的服务器上进行，服务器有两块Intel(R) Xeon(R) E5-2683 v3(2.00GHz)的CPU，4块TITAN X GPU。模型训练时为了减少训练时间，4块GPU都使用了。在APC数据集上，训练用了约6k组图片，剩下的1k多组图片用于测试，3D Faster R-CNN训练用了40个小时左右，3D Mask R-CNN用了48个小时左右；在workpiece数据集上，训练用了约1.6k组图片，剩下的400组图片用于测试，3D Faster R-CNN训练用了30个小时左右，3D Mask R-CNN用了36小时左右。
+
+\subsection{实验结果}
+在APC数据集上，本文算法Faster R-CNN和Mask R-CNN的精确度如表\ref{tab:ap1}所示。
+\begin{table}[ht]
+  \centering
+  \caption{算法在APC数据集上的精确度}
+    \begin{tabular}{cccccc}
+      \toprule
+      &input&output&$AP$&$AP_{0.5}$&$AP_{0.75}$ \\
+      \midrule
+      Faster R-CNN&RGB&bbox&33.26&56.29&34.03 \\
+      \bf{3D Faster R-CNN}&RGB+HHA&bbox&\bf{34.55}&\bf{57.99}&\bf{34.69} \\
+      Mask R-CNN&RGB&mask&32.34&55.78&33.12 \\
+      \bf{3D Mask R-CNN}&RGB+HHA&mask&\bf{33.94}&\bf{56.45}&\bf{33.99} \\
+      \bottomrule
+    \end{tabular}
+  \label{tab:ap1}
+\end{table}
+从表\ref{tab:ap1}中可以看出在APC数据集上3D Faster R-CNN相比Faster R-CNN的精确度提高了1.3个百分点左右，3D Mask R-CNN相比Mask R-CNN提高了0.8个百分点左右。整体来说对精确度的提高并不是十分明显。
+
+在workpiece数据集上，本文算法Faster R-CNN和Mask R-CNN的精确度如表\ref{tab:ap2}所示。
+\begin{table}[ht]
+  \centering
+  \caption{算法在workpiece数据集上的精确度}
+    \begin{tabular}{cccccc}
+      \toprule
+      &input&output&$AP$&$AP_{0.5}$&$AP_{0.75}$ \\
+      \midrule
+      Faster R-CNN&RGB&bbox&18.78&37.49&19.46 \\
+      \bf{3D Faster R-CNN}&RGB+HHA&bbox&\bf{32.39}&\bf{56.37}&\bf{33.54} \\
+      Mask R-CNN&RGB&mask&16.12&35.95&18.74 \\
+      \bf{3D Mask R-CNN}&RGB+HHA&mask&\bf{30.98}&\bf{53.74}&\bf{32.19} \\
+      \bottomrule
+    \end{tabular}
+  \label{tab:ap2}
+\end{table}
+从表\ref{tab:ap2}可以看出在workpiece数据集上，3D Faster R-CNN相比Faster R-CNN的精确度提高了13.6个百分点左右，3D Mask R-CNN相比Mask R-CNN提高了约14.8个百分点。
 
 \section{本章小结}
 
