@@ -1,9 +1,30 @@
-\chapter{基于点云的位姿估计算法}
+\chapter{基于4PCS的位姿估计算法}
 \label{chap:matcher}
+本章主要介绍一种基于4PCS的位姿估计算法4PCS-PE（4PCS-based Pose Estimation)，4PCS-PE主要基于全局匹配算法4PCS\cite{aiger20084}和局部匹配算法ICP\cite{besl1992method}。为了详细介绍4PCS-PE算法，本章首先从整体上简单介绍了4PCS-PE算法，包括算法所要解决的问题的具体数学描述以及相关算法的背景；然后介绍4PCS-PE算法的基础4PCS算法，并分析了其不足，进而引入改进的4PCS算法；接着介绍与改进的4PCS算法相结合的ICP算法，ICP算法主要用于提高最终位姿估计的精度；最后进行了位姿估计的实验，将本文的4PCS-PE算法与其他几个位姿估计算法相比较。
 
-\section{ICP}
+\section{4PCS-PE算法概述}
+\subsection{问题描述}
+通过第~\ref{chap:detector}章中的目标检测算法可以得到目标的bounding box或者mask，根据bounding box或者mask可以在深度图中提取对应的区域，从而获得包含目标的点云。所以现在的问题是如何通过目标的点云计算出目标的位姿，由于可以得到目标的三维模型，因此将目标的三维模型经过一个刚体变换$T$，使之与目标点云重合，然后目标的三维模型在相机坐标系下的位姿也是已知并且可调的，为方便起见将三维模型坐标系与相机坐标系重合，则目标的位姿便等于三维模型与目标点云之间的齐次变换关系，即$T$。所以，要计算目标的位姿，就要求解目标三维模型与相机采集到的目标点云之间的刚体变换$T$，如图\ref{fig:match_diagram}，这也是4PCS-PE主要要解决的问题。
+\begin{figure}[ht]
+  \centering
+  % @todo: missing match_diagram figure
+  \caption{位姿估计示意图}
+  \label{fig:match_diagram}
+\end{figure}
 
-\section{Super4PCS}
+相机所采集到的目标点云是一组包含空间三维坐标（x，y，z）以及颜色（r，g，b）的点集，由于此处并不需要颜色信息，因此对目标点云只保留空间位置信息，去除颜色信息后的目标点云记为点集$P$。三维模型亦可通过采样得到一组包含空间三维坐标的点集，记为$Q$。4PCS-PE算法就可以简化为求解一个刚体变换$T$使得点集$P$中的点经过矩阵$T$变换后，尽可能与点集$Q$重合。更为准确地，4PCS-PE算法就可以简化为求解一个LCP（Largest Common Pointset）问题：
+
+{\kai LCP问题：给定两个点集$P$和$Q$，在给定距离误差$\delta$下，求解点集$P$的最大子集$P'$，使得$T(P')$和点集$Q$之间的距离在合适的距离度量下小于$\delta$，其中$T$是一个刚体变换。}
+
+\subsection{背景介绍}
+LCP问题并不是一个新的问题，解决该问题的算法也有很多，尤其是近些年来，随着几何扫描相关技术的发展，如何将多次扫描或者多个设备采集的三维信息统一到一个坐标系下成为研究的热点，其本质上可以归结为LCP问题或其衍生问题，这些问题是计算机几何学和计算机视觉中的基础问题。
+
+其中一个比较流行的算法是通过使用稳定的局部几何描述子来匹配得到粗略的刚体变换，然后紧接着使用ICP算法迭代获取较为精确的刚体变换\cite{li2005multiscale}。这种算法的效果十分取决于所选取的描述子，常用的局部几何特征描述子有@todo；还有一种比较流行的方法是通过几何希哈方法从事先设置好的候选集中来选择合适的刚体变换\cite{wolfson1997geometric}；一些随机算法，如RANSAC（Random Sample Consesue）\cite{bolles1981ransac}通常需要足够长的时间才能保证得到合适的解。
+\section{粗略匹配算法}
+
+\section{精确匹配算法}
+
+\section{位姿估计实验}
 
 
 %%% Local Variables:
