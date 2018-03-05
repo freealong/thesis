@@ -55,7 +55,6 @@ LCP问题并不是一个新的问题，解决该问题的算法也有很多，�
 \subsection{4PCS算法及其优化}
 介绍4PCS算法的优化之前，首先先详细介绍一下4PCS算法，4PCS算法是一个对3D点集全局匹配的算法，即使所给的两个3D点集有小的重叠，4PCS都能给出较好的结果，并且对噪声有一定的鲁棒性。这种方法对初始位姿没有任何要求，其核心是从3D点集中提取出所有与给定平面4-points近似全等的共面4-points，该算法时间复杂度为$O(n^2+k)$，其中$n$是3D点集中点的个数，$k$是提取出的4-points个数。4PCS使用十分广泛，并且引申出许多相关的变种\cite{corsini2013fully}。
 
-
 \begin{algorithm}
   \caption{4PCS算法}
   \label{alg:4pcs}
@@ -89,17 +88,124 @@ LCP问题并不是一个新的问题，解决该问题的算法也有很多，�
     \ForAll {$r_{1i}\in R_1$} {
       计算与定量$r_1$和$r_2$相关的四个点$\left\{\mathbf{e}_{1i}^1,\mathbf{e}_{1i}^2,\mathbf{e}_{1i}^3,\mathbf{e}_{1i}^4\right\}$，记$\Pi(\mathbf{e}_{1i}^j)=r_{1i}$\;
     }
-    对点集$\left\{\mathbf{e}_{1i}^j\right\}$在$\mathbb{R}^3$空间建立range tree(RS)\;
+    对点集$\left\{\mathbf{e}_{1i}^j\right\}$在$\mathbb{R}^3$空间建立range tree的数据结构\;
     \ForAll {$r_{2i}\in R_1$} {
       计算与定量$r_1$和$r_2$相关的四个点$\left\{\mathbf{e}_{2i}^1,\mathbf{e}_{2i}^2,\mathbf{e}_{2i}^3,\mathbf{e}_{2i}^4\right\}$，记$\Pi(\mathbf{e}_{1i}^j)=r_{1i}$\;
     }
     $U'\leftarrow\varnothing$\;
     \ForAll {$\mathbf{e}_{2i}^j$} {
-      在RS中以$\delta$为领域检索点$\mathbf{e}_{2i}^j$附近的点，对于每个检索到的点$\mathbf{q}$，建立与$B$相对应的4个点的点集$U'\leftarrow\left\{U',(\Pi(\mathbf{q}),\Pi(\mathbf{e}_{2i}^j))\right\}$\;
+      在range tree中以$\delta$为领域检索点$\mathbf{e}_{2i}^j$附近的点，对于每个检索到的点$\mathbf{q}$，建立与$B$相对应的4个点的点集$U'\leftarrow\left\{U',(\Pi(\mathbf{q}),\Pi(\mathbf{e}_{2i}^j))\right\}$\;
     }
     \Return $U'$\;
   }
 \end{algorithm}
+
+{\kai 4PCS算法流程}：算法流程如\ref{alg:4pcs}所示，该算法输入两个点集$P$和$Q$，还有距离参数$\delta$，返回两个点集之间的刚体变换$T$。4PCS基于以下事实：{\kai 共面点集中定义的比例在仿射变换，包括刚体运动中保持不变。}举例来说，定义点集$X:=\left\{\mathbf{a},\mathbf{b},\mathbf{c},\mathbf{d}\right\}$，其中4个点不都在同一条直线上，设直线$ab$和$cd$相交于点$\mathbf{e}$，定义两个比例：
+\begin{equation}
+  \begin{array}{ccc}
+    r_1& =& {\parallel \mathbf{a}-\mathbf{e}\parallel}/{\parallel \mathbf{a}-\mathbf{b}\parallel}\\
+    r_2& =& {\parallel \mathbf{c}-\mathbf{e}\parallel}/{\parallel \mathbf{c}-\mathbf{d}\parallel}
+  \end{array}
+\end{equation}
+则在仿射变换下所定义的$r_1$和$r_2$均保持不变，如图\ref{fig:4points}。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{4points}
+  \caption{4-points比例的仿射不变性}
+  \label{fig:4points}
+\end{figure}
+如果曲面$S_1$和$S_2$匹配，并且4-points共面基在重叠区域，则$\mathbf{a},\mathbf{b},\mathbf{c},\mathbf{d}$对应的四个点$\mathbf{a}',\mathbf{b}',\mathbf{c}',\mathbf{d}'$也共面，并且
+\begin{equation}
+  \begin{array}{ccc}
+    {\parallel \mathbf{a}'-\mathbf{e}'\parallel}/{\parallel \mathbf{a}'-\mathbf{b}'\parallel}&=&r_1\\
+    {\parallel \mathbf{c}'-\mathbf{e}'\parallel}/{\parallel \mathbf{c}'-\mathbf{d}'\parallel}&=&r_2\\
+  \end{array}
+\end{equation}
+
+
+4PCS算法另一个关键技术是使用了{\kai 宽基}（\emph{wide-base}），相比于一般的基，宽基中基的长度更长，如图\ref{fig:wide-base}所示，图片上半部分是使用宽基匹配的曲线，图片下半部分是使用一般的基匹配的曲线，显然，通过比较可以发现宽基相比普通基有更稳定的匹配结果，相关理论证明见文献\cite{goodrich1994practical}。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=14cm]{wide-base}
+  \caption{宽基的匹配稳定性}
+  \label{fig:wide-base}
+\end{figure}
+
+回到4PCS算法具体实现，算法的主体其实是一个RANSAC循环，每次循环首先会从点集$P$中挑选共面的宽基$B$，具体实现时，先从点集$P$中随机选取3个点，然后在剩下的点中选取第四个点构成共面的四点，第四个点的选取尽可能使得每个点之间的距离最大（因为我们要使用宽基），并且与前3个点近似共面（显然由于噪声的存在，完全共面并不现实），但如果第四个点选取的过远也会出现问题，因为如果宽基超过两个点集的重叠区域则难以匹配，因此当选以最大距离取宽基造成误差变大时以$f=1,0.5,0.25,\ldots$的比率降低最大距离来选取宽基。
+
+在点集$P$中选取好宽基$B$后，算法下一步会在点集$Q$中通过4-points的仿射不变性找出所有与宽基$B$“全等”的基，构成集合$U$。在$Q$中选取基的方法见算法\ref{alg:4pcs}中的FINDCONGRUENT函数，函数首先使用基$B$中的点先定义两个仿射无关的比例，如图\ref{fig:findbase}中左边的图所示。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=15cm]{findbase}
+  \caption{寻找近似“全等”的基示意图}
+  \label{fig:findbase}
+\end{figure}
+假设在点集$Q$中找到两点$\mathbf{q}_1$和$\mathbf{q}_2$，并且$\left|\parallel \mathbf{q}_1-\mathbf{q}_2\parallel - \parallel \mathbf{a}-\mathbf{b}\parallel\right| \leq \delta$，则点$\mathbf{q}_1,\mathbf{q}_2$有可能与点$\mathbf{a}, \mathbf{b}$对应，则直线$\mathbf{a}\mathbf{b}$与$\mathbf{c}\mathbf{d}$相交的点$\mathbf{e}$的对应点可能为
+\begin{equation}
+  \mathbf{e}_1 = \mathbf{q}_1 + r1(\mathbf{q}_2-\mathbf{q}_1)
+\end{equation}
+或者
+\begin{equation}
+  \mathbf{e}_1 = \mathbf{q}_2 + r1(\mathbf{q}_1-\mathbf{q}_2)
+\end{equation}
+同理也可以根据$\mathbf{c},\mathbf{d}$的对应点（设为$\mathbf{q}_3, \mathbf{q}_4$）求得$\mathbf{e}$的对应点
+\begin{equation}
+  \mathbf{e}_2 = \mathbf{q}_3 + r1(\mathbf{q}_4-\mathbf{q}_3)
+\end{equation}
+或者
+\begin{equation}
+  \mathbf{e}_2 = \mathbf{q}_4 + r1(\mathbf{q}_3-\mathbf{q}_4)
+\end{equation}
+则当$\mathbf{e}_1\approx \mathbf{e}_2$时，$\mathbf{q}_1,\mathbf{q}_2,\mathbf{q}_3,\mathbf{q}_4$就是我们所要找的一组与点$\mathbf{a},\mathbf{b},\mathbf{c},\mathbf{d}$近似“全等”的基，如图\ref{fig:findbase}中右边图中的$\mathbf{q}_5,\mathbf{q}_3,\mathbf{q}_4,\mathbf{q}_1$。
+
+具体实现时，当我们在点集$Q$中找出了所有可能的$\mathbf{e}_1$和$\mathbf{e}_2$后，找出其中近似相等的$\mathbf{e}_1$和$\mathbf{e}_2$可以通过range树\cite{arya1998optimal}来实现，对于大小为$n$的点集，range树的建立时间复杂度为$O(n\lg n)$，查询附近点的时间复杂度为$O(\lg n + k)$，其中$k$是查询到点的个数。
+
+在$Q$中找出所有与基$B$近似“全等”的基后，下一步就是计算出最优的刚体变换$T$。对于$U$中的每个基$U_i$，我们可以利用最小二乘\cite{horn1987closed}的思想计算$B$到$U_i$的刚体变换$T_i$。得到刚体变换$T_i$后，我们将点集$P$进行变换$T_i$，然后对变换后的点集中的点在$Q$中查找最近点，统计最近点距离小于$\delta$的个数$S_i$，$S_i$也是评价$T_i$效果的分数，分数越高的$T_i$就是我们要求的最优刚体变换$T$。
+
+{\kai 4PCS算法时间复杂度：}设输入的两个点集$P,Q$的大小分别为$m,n$。算法中最耗时的部分是FINDCONGRUENT函数：从点集$Q$中选取距离为$d_1$和$d_2$的点对，其时间复杂度为$O(n^21)$，然后建立和查询range树，其复杂度为$O(n^2+k$，其中$k$是满足条件的基个数，因此4PCS算法整体的时间复杂度为$O(n^2+k)$，空间复杂度显然为$O(n)$。
+
+{\kai 4PCS算法不足：}仔细研究4PCS算法，可以发现从点集$Q$中提取的基与$B$并不是全等的，如图\ref{fig:4pcs-flaw}所示，
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{4pcs-flaw}
+  \caption{4PCS中"全等“的基}
+  \label{fig:4pcs-flaw}
+\end{figure}
+将线段$\mathbf{q}_1\mathbf{q}_2$绕交点转动一定角度后便不再与原基全等，但是4PCS仍然会找出点$\mathbf{q}_1',\mathbf{q}_2',\mathbf{q}_3,\mathbf{q}_4$作为与$\mathbf{p}_1',\mathbf{p}_2',\mathbf{p}_3,\mathbf{p}_4$全等的基。这一缺点会导致4PCS算法需要更多的求解时间，并且还有可能影响最终的匹配结果。
+
+
+\subsection{Outlier filter}
+从图~\ref{fig:match_diagram}其实可以看出目标点云有许多点并不属于目标物体，尤其是检测结果没有mask只能使用bbox分割目标时，不属于目标物体的离群点就尤其的多。因此，为了提高最终的匹配精度，除去这些离群点十分有必要，Outlier filter模块的作用就是根据Modified 4PCS输出的初始刚体变换来去除点云数据中的离群点，从而提升下一步ICP算法匹配的精度，使最终估计的位姿精度提高。
+
+Outlier filter模块的核心算法如算法\ref{alg:outlier-filter}所示。
+\begin{algorithm}[ht]
+  \caption{Outlier filter算法}
+  \label{alg:outlier-filter}
+  \KwIn{Point sets $P$ and $Q$, Initial transform $T$, Distance tolerance $\delta$}
+  \KwOut{Point sets $P'$ and $Q'$}
+  $P'\leftarrow P$\;
+  $Q'\leftarrow \varnothing$\;
+  \ForAll {point $\mathbf{p}_i\in P$} {
+    $\mathbf{p}_i\leftarrow T(\mathbf{p}_i)$\;
+  }
+  对点集$P$在$\mathbb{R}^3$空间建立kd树的数据结构\;
+  \ForAll {point $\mathbf{q}_i\in Q$} {
+    在kd树中检索出距离点$\mathbf{q}_i$最近的点$\mathbf{p}$\;
+    $d\leftarrow\;\parallel\mathbf{q}_i-\mathbf{p}\parallel$\;
+    \If {$d \leq \delta$} {
+      $Q'\leftarrow \left\{Q', \mathbf{q}_i\right\}$\;
+    }
+  }
+  \Return $P'$，$Q'$\;
+\end{algorithm}
+算法输入点集$P$和$Q$，需要参数初始刚体变换$T$，以及允许的距离误差$\delta$，由于点集$P$是由物体的CAD模型转换过来的，因此不对其进行滤波，只对点集$Q$进行离群点去除。具体方法是，首先使用$T$对点集$P$进行刚体变换；然后对变换后的点集建立kd树，建立kd树的目的是为了快速在点集$P$中找到距离某点最近的点，其查找的时间复杂度为$O(kN^{1-1/k}$，其中$k$是所建立kd树的维数，显然对于三维空间中点集为3，$N$是建立的kd树的节点个数；建立好kd树后，对点集$Q$中的每个点在kd树中找到与之距离最近的点，如果两点间的距离大于所设的参数$\delta$，则在点集Q中去除该点。实际运行Outlier filter算法的效果如图\ref{fig:outlier-filter}所示。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=13cm]{outlier-filter}
+  \caption{Outlier filter效果图}
+  \label{fig:outlier-filter}
+\end{figure}
+
 
 \subsection{ICP算法}
 ICP（Iterative Closest Point）算法，即最近点迭代算法，是最为经典的数据配准算法。ICP算法本质上是基于最小二乘法的最优配准方法。该算法重复进行选择对应关系点对，计算最优刚体变换，直到满足正确配准的收敛精度要求。由于ICP算法是一种迭代算法，因此只要时间允许便可以获取足够精度的解，但也正因为如此，ICP也容易陷入局部最优解。本文充分考虑了ICP算法的这个特点，通过Modified 4PCS算法给出初始的刚体变换来避免ICP算法陷入局部最优解，同时通过迭代来提高最后输出的刚体变换精度。下面介绍一下ICP算法的基本原理。
