@@ -54,6 +54,7 @@ Faster R-CNN的由两个核心模块构成：
 
 
 \subsection{HHA}
+\label{sec:hha}
 有了与彩色图对应的深度图，如何有效地利用深度图是一个值得思考的问题。从2012年AlexNet\cite{Krizhevsky2012}在ImageNet\cite{imagenet}数据集上的应用开始，深度学习在计算机视觉领域其准确率相比传统方法有了一个很大的提升，因此，本文考虑通过深度学习的方法结合深度图和彩色图进行目标检测。深度学习在彩色图上的应用已经相当成熟，但对于深度图的应用还比较少，如何使用CNN在深度图上提取特征也是一个值得探讨的问题，是将深度图直接作为一个通道使用CNN提取特征？还是将深度图变换到三维坐标（x，y，z），然后再在这三个通道上通过CNN提取特征？经过实验和相关调研，发现将深度图转换为HHA图后进行训练的模型有较高的准确率\cite{Gupta2014}，因此本文将深度图转换为HHA三个通道，然后再通过CNN提取特征。HHA三个通道分别为：
 \begin{itemize}
 \item 水平方向上视差（Horizontal disparity）
@@ -278,6 +279,7 @@ ROIPooling采用的是最近领插值（Nearest neighbor interpolation），即�
 为了评价所设计的3D Faster R-CNN和3d Mask R-CNN算法的性能，分别在一个现有的数据集和一个自己采集的实际应用的数据集上进行了网络的训练和测试，并与原始的Faster R-CNN和Mask R-CNN相比较，验证了所设计算法的性能。
 
 \subsection{数据集}
+\label{sec:dataset}
 实验所采用的数据集一个是参加APC(Amazon Picking Challenge)的MIT-Princeton队伍所采集的数据集"Shelf \& Tote" Benchmark Dataset\cite{apcdataset}，此处简单记为APC数据集，另外一个数据集是实际用于bin-picking在实验室采集的数据集，记为workpiece数据集。
 
 {\kai APC数据集：}该数据集共有39类不同的物体，452个场景，每个场景有不同的物体，一共7281组图片，通过在多个场景下，不同的视角下使用Intel Realsense SR300相机所拍摄。标注的数据是每个场景下物体在世界坐标系下的位姿，以及每个场景下相机在世界坐标系下的位姿，是一个半自动标注的数据集，通过物体的位姿和相机的位姿就可以得到每个物体在相机坐标系下的位姿，数据集中部分数据如图\ref{fig:apc_dataset}所示。

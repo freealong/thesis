@@ -76,7 +76,7 @@ would like to use here]
 %\RequirePackage[version=3]{mhchem}
 
 % 算法环境
-\RequirePackage[ruled,vlined]{algorithm2e}
+\RequirePackage[ruled,vlined,linesnumbered]{algorithm2e}
 \renewcommand{\algorithmcfname}{算法} %针对 algorithm2e 宏包
 %\RequirePackage{algorithm,algorithmicx,algpseudocode}
 %\renewcommand{\algorithmicrequire}{\textbf{Input:}}
@@ -108,7 +108,8 @@ would like to use here]
 %\newcommand{\Set}[1]{\mathbb{#1}}% Special sets (e.g. real numbers) in blackboard bold
 %\newcommand{\Transpose}{\mathsf{T}} % Matrix Transpose
 %\newcommand{\tr}{\mathrm{tr}} % trace
-
+\DeclareMathOperator*{\avg}{avg}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 % 单元格内换行
 %\newcommand{\tabincell}[2]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}  
 

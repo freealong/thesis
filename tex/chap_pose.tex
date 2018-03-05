@@ -1,0 +1,94 @@
+\chapter{3D目标位姿估计算法}
+\label{chap:pose}
+本章提出了一种3D目标位姿估计算法3D-MRAI（3D Mask R-CNN \& A4PCS-ICP），该算法根据所提供目标的CAD模型，可以在RGB-D图中检测出目标，并给出目标的位姿。3D-ODPE算法主要基于第~\ref{chap:detector}~章中基于RGB-D图的目标检测算法3D Faster R-CNN/3D Mask R-CNN，以及第~\ref{chap:matcher}~章中的点云匹配算法A4PCS-ICP，通过将这两个算法结合，分两步计算出RGB-D图中目标的位姿。为了评价3D-MRAI算法的性能，本章还设计了相关实验，并与LINEMOD\cite{hinterstoisser2012gradient}算法做了比较。
+
+\section{3D-MRAI框架设计}
+3D-MRAI主要解决三维空间中的目标检测和位姿估计问题，根据RGB-D图像，给出图像中目标的种类和其在三维空间中的位姿，区别与常见的在2D图像中的目标检测（如第~\ref{chap:detector}~章中的算法）给出的是目标的种类和其在图像坐标中的bounding box或者mask。给出目标在三维空间中的位姿的意义十分巨大，尤其在机器人领域中，图像层面的结果往往难以满足要求，但难度也很大。
+
+一些给出3D目标位姿的传统算法，如3DMatch\cite{zeng20163dmatch}，3DMatch通过匹配局部几何特征来计算目标的位姿，缺点是对采集的3d数据质量要求很高，往往需要使用激光采集，因此整个识别过程的时间很久；通过SIFT描述子来匹配目标位姿\cite{dias2015sift}也是一种方法，但其对纹理较少的物体往往难以匹配，效果很差；另外如LINEMOD和MOPED\cite{collet2011moped}这些位姿估计框架，在某些情况下如目标在平整的桌面上并且光照条件较好的情况下才能取得满意的效果。因此，急需一种鲁棒性较强，精度较高，计算时间较短的3D目标位姿估计算法。
+
+3D-MRAI的框架如图\ref{fig:detect-pose}所示，
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=12cm]{detect-pose}
+  \caption{3D-MRAI算法框架}
+  \label{fig:detect-pose}
+\end{figure}
+从图\ref{fig:detect-pose}可以看出算法的输入是RGB图像、深度图，以及目标物体的CAD模型，输出是图像中检测到的目标的位姿。3D-MRAI的核心部分是3D Faster/Mask R-CNN和A4PCS-ICP算法，3D Faster/Mask R-CNN以及在第~\ref{chap:detector}~章详细介绍过，A4PCS-ICP也在第~\ref{chap:matcher}~章详细介绍过了。因此，3D-MRAI估计目标的位姿流程上也是分为两步（two-stage）：
+\begin{itemize}
+\item {\kai 目标检测}：利用3D Faster/Mask R-CNN检测目标，得到目标BBox或者Mask
+\item {\kai 点云匹配}：将CAD模型与目标检测对应的点云进行匹配，得到目标位姿
+\end{itemize}
+
+\section{3D-MRAI具体实现}
+对与3D-MRAI输入的RGB图像和深度图，可以由对偶RGB-D获得，具体见第~\ref{chap:rgbd}~章。目标物体的CAD模型也容易获得，对于工厂中的工件，往往是有其CAD模型的，对于一般物体，可以通过3D扫描仪重构出来，当然也可以使用本文设计的对偶RGB-D相机采集重构出来。
+
+获得目标物体的CAD模型后，为了方便后续需处理，我们需要将其转换为点云。具体如何转换的话，基本思想是参考Uniform Sampling算法，Uniform Sampling算法的核心思想是以3D栅格中所有点的质心代替这些点，从而达到降采样。类似地，对于CAD模型也建立3D栅格，但由于无法获得3D栅格总所有点，因此判断CAD模型是否穿过3D栅格，如果穿过3D栅格，则在该3D栅格中心出增加一个点。显然3D栅格的边长越大，转换后的点云数量越小，精度越低，考虑到所使用相机生成点云的精度，因使CAD模型转换后的点云的精度与相机采集的点云的精度近似，实际取3D栅格边长为1mm，一个实际工件的CAD模型和以1mm为边长进行采样转换后的模型点云如图~\ref{fig:model-pc}~所示。
+\begin{figure}[ht]
+  \centering
+  \subfloat[原CAD模型]{\includegraphics[width=7cm]{object-model}}
+  \hskip1cm
+  \subfloat[转换后点云]{\includegraphics[width=6cm]{object-pointcloud}}
+  \label{fig:model-pc}
+  \caption{CAD模型和转换后的点云}
+\end{figure}
+此外，还需要将深度图转换为点云，这一步则相对简单，只要通过深度摄像头的内参矩阵反投影到三维空间即可，详细见第~\ref{chap:rgbd}~章。
+
+对于3D Faster/Mask R-CNN的输入，还需要将深度图转换为HHA，具体见~\ref{sec:hha}~小节。3D Faster/Mask R-CNN模块的实现，由于一个深度神经网络，只要训练好后将网络模型导出成Tensorflow的pb文件，然后此处导入该网络模型，给定输入，网络输出便是图片中目标的BBox/Mask和Class。
+
+得到目标物体的BBox/Mask后，需要从深度图对应的点云中抠出目标点云，由于深度图转换的点云是有序的，因此BBox/Mask在深度图中的索引坐标与深度图转换的点云的索引坐标是一致的，只要将点云中对应的点提取出来就行，并滤去无效的点然后适当降采样即可，尽管滤波和降采样之后的目标点云是无序的，但后续匹配算法并不需要输入点云有序，而且降采样后点云数量减少，将会减少后续匹配算法的时间。
+
+裁剪得到目标物体的点云$Q_i$后，找出对应物体的CAD模型转换的点云$P_i$，将$P_i$和$Q_i$输入到A4PCS-ICP模型，即可得到CAD模型到目标点云之间的刚体变换$T_i$，由于CAD模型坐标系与相机坐标系重叠，因此将矩阵$T$转换为$X,Y,Z,r,p,y$就是目标点云在相机坐标系下的位姿Pose，最后将所有匹配得到的结果与目标检测的结果组合，并滤去匹配或检测分数较低的结果。详细的算法流程如算法\ref{alg:3d-mrai}所示。
+\begin{algorithm}
+  \caption{3D-MRAI算法}
+  \label{alg:3d-mrai}
+  \KwIn{RGB Image $I$, Depth Map $D$, CAD Models $M$}
+  \KwOut{Set of Pose and Class $Res$}
+  $Res\leftarrow \varnothing$\;
+  $P\leftarrow \varnothing$\;
+  \ForAll {$M_i\in M$} {
+    $P\leftarrow \left\{P, CAD2PointCloud(M_i)\right\}$\;
+  }
+  $H = Depth2HHA(D)$\;
+  $Q = Depth2PointCloud(D)$\;
+  $Mask, Class \leftarrow 3DMASKRCNN(I, H)$\tcp*{Same with $3DFASTERRCNN$}
+  \ForAll {$m_i\in Mask, c_i\in Class$} {
+    $Q_i \leftarrow Crop(Q, m_i)$\;
+    $P_i \leftarrow P(c_i)$\;
+    $T_i,S_i\leftarrow A4PCSICP(P_i, Q_i)$\;
+    \If {$S_i > S_{min}$} {
+      $Res\leftarrow \left\{Res, \left[T_i, c_i\right]\right\}$\;
+    }
+  }
+  \Return $Res$
+\end{algorithm}
+
+\section{3D目标位姿估计实验}
+为了评价所提出的3D-MRAI的性能，设计了3D目标位姿估计的实验，并与文献\cite{hinterstoisser2012model}所提出的基于LINEMOD算法的3D目标位姿估计框架相比。
+\subsection{数据集}
+实验所使用的数据集是workpiece数据集，在第\ref{sec:dataset}小节中已经部分介绍过了，该数据集是在实验室采集的三类物体，第~\ref{chap:detector}~章中实验所用workpiece数据集中的ground truth是物体的种类、BBox和Mask，workpiece数据集中测试集中的图片的ground truth除了物体的种类、BBox和Mask，还有物体的位姿，物体的位姿是通过在物体旁固定标定板采集的。具体方法是，通过固定标定板在目标物体旁，我们可以记录标定板到目标的刚体变换关系$T_1$，然后我们通过彩色摄像头可以检测出标定板的位姿$T_2$，则物体的位姿可以通过下式得到
+\begin{equation}
+  T = T_2T_1
+\end{equation}
+
+\subsection{实验内容}
+为了有效的评价3D-MRAI算法，我们先定义一个合适的评价指标{\kai 姿态误差}：
+\begin{equation}
+  m = {\underset{\mathbf{x}\in M}{avg}} \; {\parallel (R\mathbf{x}+t) - (\tilde{R}\mathbf{x}+\tilde{t})\parallel}
+\end{equation}
+其中$M$表示算法运行结果得到的物体种类对应的CAD模型转换得到的点云，$R$和$t$分别表示从ground truth物体位姿分解得到的旋转变换和平移变换，$\tilde{R}$和$\tilde{t}$分别表示从算法运行结果得到的物体位姿分解得到的旋转变换和平移变换。显然，如果算法运行结果和ground truth越接近，所定义的姿态误差就越小。对于一些对称的物体（如圆柱体的被子），显然不同角度下相机看到的目标物体可能近似，会造成算法运行的结果正确的情况下与ground truth相差很大，造成姿态误差很大，与我们所定义的评价指标的宗旨相违背。因此，针对一些对称的物体，重新定义姿态误差为
+\begin{equation}
+  m = {\avg_{\mathbf{x}_1\in M}} \; {\min_{\mathbf{x}_2\in M}} \; \norm{(R\mathbf{x}_1+t) - (\tilde{R}\mathbf{x}_2+t)}
+\end{equation}
+此外，如果$k_md>m$，我们就认为目标物体准确检测到了，并且估计的位姿正确，其中$d$是目标物体对应模型的直径，$k_m$是系数。因此，还可以定义一个正确检测目标并正确估计目标位姿的准确率。
+
+实验在workpiece数据集的测试集上分别运行了3D-MRAI和文献\cite{hinterstoisser2012model}中的LINEMOD算法，运行实验的计算机
+\subsection{实验结果}
+
+\section{本章小结}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../thesis"
+%%% End:
