@@ -1,11 +1,11 @@
 \chapter{3D目标位姿估计算法}
 \label{chap:pose}
-本章提出了一种3D目标位姿估计算法3D-MRAI（3D Mask R-CNN \& A4PCS-ICP），该算法根据所提供目标的CAD模型，可以在RGB-D图中检测出目标，并给出目标的位姿。3D-ODPE算法主要基于第~\ref{chap:detector}~章中基于RGB-D图的目标检测算法3D Faster R-CNN/3D Mask R-CNN，以及第~\ref{chap:matcher}~章中的点云匹配算法A4PCS-ICP，通过将这两个算法结合，分两步计算出RGB-D图中目标的位姿。为了评价3D-MRAI算法的性能，本章还设计了相关实验，并与LINEMOD\cite{hinterstoisser2012gradient}算法做了比较。
+本章提出了一种3D目标位姿估计算法3D-MRAI（3D Mask R-CNN \& A4PCS-ICP），该算法根据所提供目标的CAD模型，可以在RGB-D图中检测出目标，并给出目标的位姿。3D-ODPE算法主要基于第~\ref{chap:detector}~章中基于RGB-D图的目标检测算法3D Faster R-CNN/3D Mask R-CNN，以及第~\ref{chap:matcher}~章中的点云匹配算法A4PCS-ICP，通过将这两个算法结合，分两步计算出RGB-D图中目标的位姿。为了评价3D-MRAI算法的性能，本章还设计了相关实验，并与同类算法做了比较。
 
 \section{3D-MRAI框架设计}
 3D-MRAI主要解决三维空间中的目标检测和位姿估计问题，根据RGB-D图像，给出图像中目标的种类和其在三维空间中的位姿，区别与常见的在2D图像中的目标检测（如第~\ref{chap:detector}~章中的算法）给出的是目标的种类和其在图像坐标中的bounding box或者mask。给出目标在三维空间中的位姿的意义十分巨大，尤其在机器人领域中，图像层面的结果往往难以满足要求，但难度也很大。
 
-一些给出3D目标位姿的传统算法，如3DMatch\cite{zeng20163dmatch}，3DMatch通过匹配局部几何特征来计算目标的位姿，缺点是对采集的3d数据质量要求很高，往往需要使用激光采集，因此整个识别过程的时间很久；通过SIFT描述子来匹配目标位姿\cite{dias2015sift}也是一种方法，但其对纹理较少的物体往往难以匹配，效果很差；另外如LINEMOD和MOPED\cite{collet2011moped}这些位姿估计框架，在某些情况下如目标在平整的桌面上并且光照条件较好的情况下才能取得满意的效果。因此，急需一种鲁棒性较强，精度较高，计算时间较短的3D目标位姿估计算法。
+一些给出3D目标位姿的传统算法，如3DMatch\cite{zeng20163dmatch}，3DMatch通过匹配局部几何特征来计算目标的位姿，缺点是对采集的3d数据质量要求很高，往往需要使用激光采集，因此整个识别过程的时间很久；通过SIFT描述子来匹配目标位姿\cite{dias2015sift}也是一种方法，但其对纹理较少的物体往往难以匹配，效果很差；另外如LINEMOD\cite{hinterstoisser2012gradient}和MOPED\cite{collet2011moped}这些位姿估计框架，在某些情况下如目标在平整的桌面上并且光照条件较好的情况下才能取得满意的效果。因此，急需一种鲁棒性较强，精度较高，计算时间较短的3D目标位姿估计算法。
 
 3D-MRAI的框架如图\ref{fig:detect-pose}所示，
 \begin{figure}[ht]
@@ -82,8 +82,63 @@
 \end{equation}
 此外，如果$k_md>m$，我们就认为目标物体准确检测到了，并且估计的位姿正确，其中$d$是目标物体对应模型的直径，$k_m$是系数。因此，还可以定义一个正确检测目标并正确估计目标位姿的准确率。
 
-实验在workpiece数据集的测试集上分别运行了3D-MRAI和文献\cite{hinterstoisser2012model}中的LINEMOD算法，运行实验的计算机
+实验在workpiece数据集的测试集上分别运行了3D-MRAI和文献\cite{hinterstoisser2012model}中的基于LINEMOD算法的检测框架，运行实验的计算机有两块Intel(R) Xeon(R) E5-2683 v3(2.00GHz)的CPU，4块TITAN X GPU，由于3D-MRAI有深度神经网络所以使用了一块GPU和一块CPU，Hinterstorisser等人的算法不需要GPU，只使用了一块CPU。
+
 \subsection{实验结果}
+% @TODO: exp detect results figures
+分别统计3D-MRAI和LINEMOD在测试集上的运行结果，变化系数$k_m$统计算法的准确率如表\ref{tab:mrai}所示。
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{ccccccc}
+    \toprule
+    $k_m[\%]$&5&7&9&11&13&15\\
+    \midrule
+    Hinterstorisser et al.&75.63& 83.84& 89.13& 93.48& 96.83&98.12\\
+    \bf{3D-MRAI}&95.12& 97.35& 98.10& 98.69& 99.22& 100.00\\
+    \bottomrule
+  \end{tabular}
+  \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
+  \label{tab:mrai}
+\end{table}
+表中$k_m$从$5\%$变化到$15\%$，表示物体直径的占比，$k_m$越大，允许的姿态误差就越大，因此准确率就越高。实际实验时，发现$k_m\approx 10\%$时基本上肉眼可以看出匹配的姿态误差。将表\ref{tab:mrai}绘制成图如\ref{fig:mrai}所示，从图中可以发现本文所提出的3D-MRAI算法的准确率大大超过了Hinterstorisser等人的算法，在$k_m=13\%$是3D-MRAI算法的准确率已经接近$100\%$了，以肉眼可以看出匹配的姿态误差$k_m=9\%$为标准时3D-MRAI算法的准确达到了$98.10\%$，比Hinterstorisser等人提出的算法高了大约$9$个百分点。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=15cm]{accuracy}
+  \caption{3D-MRAI和Hinterstorisser等人的算法准确率曲线}
+  \label{fig:mrai}
+\end{figure}
+
+为了进一步观察算法给出位姿的精度，取$k_m=9\%$时3D-MRAI准确检测的例子，将目标物体的位姿转换为$X,Y,Z,r,p,y$六个直观的变量三维位置和姿态欧拉角，然后于ground truth相比较，得到算法结果在距离和角度上的误差的频率直方图如图\ref{fig:pose-error}所示。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=16cm]{pose-error}
+  \caption{3D-MRAI算法精度}
+  \label{fig:pose-error}
+\end{figure}
+从图中可以看出3D-MRAI正确检测和估计目标位姿的情况下，在$X,Y,Z$方向下的位置误差大部分分布在$0\sim 1mm$之间，其距离精度在$1mm$左右；在$r,p,y$三个角度下的角度误差也大部分分布在$0\sim 1deg$之间，其角度精度在$1deg$左右。统计图\ref{fig:pose-error}中的数据，可以算出距离误差和角度误差的的均值和方差为：
+\begin{equation}
+  \begin{array}{ccc}
+    e_d &=& 0.82\pm0.21mm\\
+    e_a &=& 0.91\pm0.29deg
+  \end{array}
+\end{equation}
+
+除了关心算法的准确率和精度，算法的运行时间也是我们所关心的。在实验所用的计算机上，本文所设计的3D-MRAI算法与Hinterstorisser等人设计的基于LINEMOD算法的平均帧率如表\ref{tab:mrai-fps}所示。
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{ccc}
+    \toprule
+    &Hinterstoisser et al.&\bf{3D-MRAI}\\
+    \midrule
+    FPS&7.6&2.2\\
+    \bottomrule
+  \end{tabular}
+  \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
+  \label{tab:mrai}
+\end{table}
+表中可以看出3D-MRAI的FPS相比Hinterstorisser等人的算法的FPS相对较低，由于使用了深度神经网络相关的算法，涉及到较大的计算量，因此较低的FPS也在情理之中。
+
+综上所述，在$k_m=9\%$时，3D-MRAI算法的准确率为$98.10\%$左右，其估计的位姿的距离精度为$0.82\pm0.21mm$，角度精度为$0.91\pm0.29deg$。
 
 \section{本章小结}
 
