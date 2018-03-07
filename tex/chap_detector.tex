@@ -50,7 +50,8 @@ Faster R-CNN的由两个核心模块构成：
 \item Fast R-CNN
 \end{itemize}
 整个网络是一个端到端（end-to-end）的目标检测网络，输入图片，输出图片中检测到的目标的类别和Bounding Box。RPN模块输出候选框，形象地说，RPN模块告诉Fast R-CNN模块去哪里检测目标，Fast R-CNN模块输出检测结果。
-% @todo: more specific
+
+@todo: faster r-cnn more specific ?
 
 
 \subsection{HHA}
@@ -348,7 +349,7 @@ APC数据集中标注的标签可以认为是每个物体在相机坐标系下�
 {\kai workpiece数据集：} 该数据集有三类物体，共2k组图片。该数据集与APC数据集最大的不同是，同一张图片中存在大量不同位姿的同种物体，并且三类物体都缺少纹理(textureless)，因此Faster R-CNN和Mask R-CNN在该数据集上的表现理论上应该大大不如3D Faster R-CNN和3D Mask R-CNN。部分数据集中的图片如图\ref{fig:wp_dataset}所示。
 \begin{figure}[ht]
   \centering
-  % @todo: missing figure
+  @todo: missing workpiece dateset figures
   \subfloat{\includegraphics[width=3.5cm]{wp_color1}}
   \hskip0.2cm
   \subfloat{\includegraphics[width=3.5cm]{wp_color2}}
@@ -422,7 +423,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 % \end{figure}
 \begin{figure}[ht]
   \centering
-  % @todo: apc figure results
+  @todo: apc figure results
   \caption{算法APC数据集上部分检测结果}
   \label{fig:apc_res}
 \end{figure}
@@ -446,7 +447,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 \end{table}
 \begin{figure}[ht]
   \centering
-  % @todo: workpiece figure results
+  @todo: workpiece figure results
   \caption{算法workpiece数据集上部分检测结果}
   \label{fig:wp_res}
 \end{figure}
@@ -469,6 +470,8 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 
 \section{本章小结}
 本章主要介绍了两个目标检测的算法3D Faster R-CNN和3D Mask R-CNN，
+
+@todo：detection 本章小结
 
 %%% Local Variables:
 %%% mode: latex

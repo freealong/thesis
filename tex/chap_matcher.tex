@@ -155,7 +155,7 @@ A4PCS-ICP由三个模块组成：Angle-fixed 4PCS、Outlier filter和ICP，Angle
 \end{figure}
 将线段$\mathbf{q}_1\mathbf{q}_2$绕交点转动一定角度后便不再与原基全等，但是4PCS仍然会找出点$\mathbf{q}_1',\mathbf{q}_2',\mathbf{q}_3,\mathbf{q}_4$作为与$\mathbf{p}_1',\mathbf{p}_2',\mathbf{p}_3,\mathbf{p}_4$全等的基。这一缺点会导致4PCS算法需要更多的求解时间，并且还有可能影响最终的匹配结果。
 
-为了解决4PCS算法
+@todo: 4pcs算法改进
 
 \subsection{Outlier filter}
 从图~\ref{fig:match_diagram}其实可以看出目标点云有许多点并不属于目标物体，尤其是检测结果没有mask只能使用bbox分割目标时，不属于目标物体的离群点就尤其的多。因此，为了提高最终的匹配精度，除去这些离群点十分有必要，Outlier filter模块的作用就是根据Angle-fixed 4PCS输出的初始刚体变换来去除点云数据中的离群点，从而提升下一步ICP算法匹配的精度，使最终估计的位姿精度提高。
@@ -245,7 +245,10 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 \section{点云匹配实验}
 为了评价所设计的算法A4PCS-ICP，考察其匹配精度以及时间性能，本文设计了位姿估计的实验，不但考察了A4PCS-ICP的性能，还与其他一些算法作比较，验证了A4PCS-ICP算法的匹配的精确度。
 
+@todo: 点云匹配实验
+
 \section{本章小结}
+@todo: matcher 小结
 
 %%% Local Variables:
 %%% TeX-master: "../thesis.tex"

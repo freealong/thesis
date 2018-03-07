@@ -360,7 +360,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 算法\ref{alg:fill_hole}主要实现对于深度缺失的点，将检查其周围的深度信息，当其四个角上都有有效的深度信息时，并且周围有效深度信息的极值小于一定阈值时，会用周围有效深度信息的均值填充该缺失的点。实际的效果如图\ref{fig:fill_hole}所示。
 \begin{figure}[!ht]
   \centering
-  % @TODO: fill hole 效果图
+  @TODO: fill hole 效果图
   \caption{填补深度信息缺失算法效果图}
   \label{fig:fill_hole}
 \end{figure}
@@ -413,7 +413,7 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 算法\ref{alg:fuse}不仅考虑了深度缺失的情况，对于深度信息差值过大的情况也进行了处理。实际处理的效果如图\ref{fig:fuse}所示。
 \begin{figure}[!ht]
   \centering
-  % @TODO 深度融合算法效果图
+  @TODO 深度融合算法效果图
   \caption{深度融合算法效果图}
   \label{fig:fuse}
 \end{figure}
@@ -539,7 +539,7 @@ $\hat{d}_i$的计算相对简单，根据$D_i$中拟合出相机坐标系下平�
 实验分别对SR300和对偶RGB-D相机在平板距离相机0.2到1.2m范围内采集了$1 + 19$组数据，测得每组数据深度信息的三个指标，如图\ref{fig:depth_exp_res}所示。
 \begin{figure}
   \centering
-  % @TODO：sr300 and dual-rgb-d camera's fill rate, precision, nosie plot
+  @TODO：sr300 and dual-rgb-d camera's fill rate, precision, nosie plot
   \caption{深度图质量测试实验结果}
   \label{fig:depth_exp_res}
 \end{figure}
