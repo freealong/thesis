@@ -1,13 +1,27 @@
 % 定义中英文摘要和关键字
 \begin{cabstract}
-  @todo:摘要
+  三维视觉是机器人感知的重要组成部分，但其目前的技术水平难以帮助机器人有效地感知周围的三维世界。随着近几年深度学习的发展，计算机视觉领域取得了巨大的发展，尤其是在2D视觉领域，2D目标的检测和分类的准确率得到了巨大的提升，但3D目标的检测并没有巨大的提升。因此，本文针对机器人目前三维感知的困难，通过参考深度学习在2D视觉上的突破，将其引入到3D视觉上来，提出了3D-MRAI算法，用于解决对3D目标的检测以及位姿的估计。
+
+  深度信息的质量对3D目标检测以及位姿估计的准确率和精度都有至关重要的影响，因此为了获取高质量的深度信息，本文针对现有RGB-D相机的缺点，提出了对偶RGB-D相机结构，通过组合两个低价的RGB-D相机来获取高质量的深度信息，提高了相机获取深度图的填充率并且增强了深度信息的鲁棒性。
+
+  为了能够在RGB-D图中检测出目标物体的种类以及位姿，本文提出的3D-MRAI算法分为两步，第一步在相机拍摄的三维点云中分割出目标物体点云；第二步通过点云匹配算法求解出目标的位姿。为了分割出目标物体点云，本文基于2D目标检测中的Faster R-CNN和Mask R-CNN两个算法，提出了3D Faster R-CNN和3D Mask R-CNN算法，3D Faster R-CNN和3D Mask R-CNN通过将深度图变换为HHA图，有效地利用三维信息，并结合RGB图完成对目标物体的检测，并且为了应对目标物体的各种姿态，算法还引入了Spatial Transformer结构。3D Faster R-CNN和3D Mask R-CNN相比Faster R-CNN和Mask R-CNN充分利用三维信息，对检测一些纹理较少（Textureless）的物体有着更高的准确率。为了求解目标的位姿，本文通过匹配目标物体点云和目标物体3D模型来实现，为此基于4PCS算法提出了A4PCS-ICP点云匹配算法，通过在改进4PCS算法的基础上引入ICP算法提高了匹配精度。
+
+  本文还将所提出的3D-MRAI算法实际应用到Bin-Picking问题上，设计了一个基于3D-MARI算法的随机分拣视觉系统，所设计的系统在实验中达到了100\%的抓取成功率，并且算法的运算时间也完全满足实际应用。
 \end{cabstract}
 
 \ckeywords{三维视觉，目标检测，位姿估计，随机分拣}
 
 
 \begin{eabstract}
-  @todo: abstract
+3D vision is an important part of robot perception, but its current level of technology is difficult to help robots effectively perceive the surrounding 3D world. With the development of deep learning in recent years, tremendous development has been made in the field of computer vision. Especially in the field of 2D vision, the accuracy of 2D object detection and classification has been greatly improved, but the detection of 3D objects has not been huge Enhance. Therefore, this dissertation aims at the difficulty of current three-dimensional robot perception. By introducing the 2D visual breakthrough of deep learning and introducing it into 3D visualization, a 3D-MRAI algorithm is proposed to solve the problem of 3D target detection and pose estimation .
+
+  Therefore, in order to obtain high-quality depth information, aiming at the shortcomings of the existing RGB-D cameras, a dual RGB- D camera architecture to obtain high-quality depth information by combining two low-cost RGB-D cameras, increasing the fill factor of the camera for depth maps and enhancing the robustness of depth information.
+
+  The 3D-MRAI algorithm proposed in this paper is divided into two steps, the first step is to segment the point cloud of the target object in the 3D point cloud photographed by the camera; the second Step through point cloud matching algorithm to solve the target pose. In order to segment the target cloud, this paper proposes 3D Faster R-CNN and 3D Mask R-CNN algorithms, 3D Faster R-CNN and 3D based on Faster R-CNN and Mask R-CNN in 2D target detection Mask R-CNN utilizes Spatial Transformer structure by transforming depth map into HHA map, making full use of three-dimensional information and combining with RGB map to detect target object. In order to deal with various pose of target object, Spatial Transformer structure is introduced. The 3D Faster R-CNN and 3D Mask R-CNN take full advantage of the 3D information compared to the Faster R-CNN and Mask R-CNN, giving higher accuracy for detecting some textureless objects. In order to solve the pose of the target, this paper realizes the 3D model of point cloud and the target object by matching the target object. Therefore, based on the 4PCS algorithm, an A4PCS-ICP cloud matching algorithm is proposed. By introducing the ICP algorithm based on the improved 4PCS algorithm, Matching accuracy.
+
+  This paper also applies the proposed 3D-MRAI algorithm to the Bin-Picking problem and designs a randomized sorting vision system based on 3D-MARI algorithm. The designed system achieves 100\% Rate, and algorithm operation time also fully meet the practical application.
+
+  @todo: improve abstract
 \end{eabstract}
 
 \ekeywords{3D vision, object detection, pose estimation, Bin-Picking}
