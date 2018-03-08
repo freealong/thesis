@@ -32,7 +32,7 @@ A4PCS-ICP算法基于4PCS，针对4PCS的瓶颈，有效地降低了其时间复
   \caption{A4PCS-ICP算法框架}
   \label{fig:4pcs-pe}
 \end{figure}
-A4PCS-ICP由三个模块组成：Angle-fixed 4PCS、Outlier filter和ICP，Angle-fixed 4PCS是4PCS算法的优化版，也是A4PCS-ICP算法的核心，根据输入的两个点集，输出两个点集之间的粗略的变换关系；Outlier filter根据Angle-fixed 4PCS的输出对点集$P'$和$Q'$进行滤波，去掉一些离群点，用以提高下一步ICP算法的精度；ICP模块通过以Angle-fixed filter输出的变换关系为初始值对滤波后的两个点集进行迭代求解最佳的刚体变换关系，输出最终的变换关系$T$，也是目标的位姿。
+A4PCS-ICP由三个模块组成：Angle-fixed 4PCS、Outlier filter和ICP，Angle-fixed 4PCS是4PCS算法的优化版，也是A4PCS-ICP算法的核心，根据输入的两个点集，输出两个点集之间的粗略的变换关系；Outlier filter根据Angle-fixed 4PCS的输出对点集$P'$和$Q'$进行滤波，去掉一些离群点，用以提高下一步ICP算法的精度；ICP模块通过以Angle-fixed filter输出的变换关系为初始值对滤波后的两个点集进行迭代求解最佳的刚体变换关系，输出最终的变换关系$T$和匹配的分数$S$，$T$也是目标的位姿，$S$是点云匹配误差的倒数，实验部分会具体介绍匹配误差。
 
 \subsection{Angle-fixed 4PCS算法}
 介绍Angle-fixed 4PCS算法之前，首先先详细介绍一下4PCS算法，4PCS算法是一个对3D点集全局匹配的算法，即使所给的两个3D点集有小的重叠，4PCS都能给出较好的结果，并且对噪声有一定的鲁棒性。这种方法对初始位姿没有任何要求，其核心是从3D点集中提取出所有与给定平面4-points近似全等的共面4-points，该算法时间复杂度为$O(n^2+k)$，其中$n$是3D点集中点的个数，$k$是提取出的4-points个数。4PCS使用十分广泛，并且引申出许多相关的变种\cite{corsini2013fully}。
@@ -62,9 +62,9 @@ A4PCS-ICP由三个模块组成：Angle-fixed 4PCS、Outlier filter和ICP，Angle
   \BlankLine
   \BlankLine
   \SetKwProg{Def}{def}{:}{}
-  \Def{FINDCONGRUENT($B\equiv\left\{\mathbf{b_1},\mathbf{b_2},\mathbf{b_3},\mathbf{b_4}\right\},Q,\delta)$} {
-    $d_1\leftarrow\;\parallel\mathbf{b_1}-\mathbf{b_2}\parallel$\;
-    $d_2\leftarrow\;\parallel\mathbf{b_3}-\mathbf{b_4}\parallel$\;
+  \Def{FINDCONGRUENT($B:=\left\{\mathbf{b}_1,\mathbf{b}_2,\mathbf{b}_3,\mathbf{b}_4\right\},Q,\delta)$} {
+    $d_1\leftarrow\;\parallel\mathbf{b}_1-\mathbf{b}_2\parallel$\;
+    $d_2\leftarrow\;\parallel\mathbf{b}_3-\mathbf{b}_4\parallel$\;
     计算$R_1\equiv\left\{(\mathbf{p}_i,\mathbf{p}_j)\;|\;\mathbf{p}_i,\mathbf{p}_j\;\in Q\right\}$，使得$\parallel\mathbf{p}_i-\mathbf{p}_j\parallel\;\in [d_1-\delta,d_1+\delta]$\;
     计算$R_2\equiv\left\{(\mathbf{p}_i,\mathbf{p}_j)\;|\;\mathbf{p}_i,\mathbf{p}_j\;\in Q\right\}$，使得$\parallel\mathbf{p}_i-\mathbf{p}_j\parallel\;\in [d_2-\delta,d_2+\delta]$\;
     \ForAll {$r_{1i}\in R_1$} {
@@ -153,9 +153,45 @@ A4PCS-ICP由三个模块组成：Angle-fixed 4PCS、Outlier filter和ICP，Angle
   \caption{4PCS中"全等“的基}
   \label{fig:4pcs-flaw}
 \end{figure}
-将线段$\mathbf{q}_1\mathbf{q}_2$绕交点转动一定角度后便不再与原基全等，但是4PCS仍然会找出点$\mathbf{q}_1',\mathbf{q}_2',\mathbf{q}_3,\mathbf{q}_4$作为与$\mathbf{p}_1',\mathbf{p}_2',\mathbf{p}_3,\mathbf{p}_4$全等的基。这一缺点会导致4PCS算法需要更多的求解时间，并且还有可能影响最终的匹配结果。
-
-@todo: 4pcs算法改进
+将线段$\mathbf{q}_1\mathbf{q}_2$绕交点转动一定角度后便不再与原基全等，但是4PCS仍然会找出点$\mathbf{q}_1',\mathbf{q}_2',\mathbf{q}_3,\mathbf{q}_4$作为与$\mathbf{p}_1',\mathbf{p}_2',\mathbf{p}_3,\mathbf{p}_4$全等的基。这一缺点会导致4PCS算法需要更多的求解时间，并且还有可能影响最终的匹配结果。因此，对4PCS改进去除这些与原基不是全等的基很有必要。改进后的算法如算法\ref{alg:a4pcs}所示，滤去不全等的基的算见其中的FILTERCONGRUENT函数。
+\begin{algorithm}
+  \caption{A4PCS算法}
+  \label{alg:a4pcs}
+  \KwIn{Point sets $P$ and $Q$, distance tolerance $\delta$, angle tolerance $\epsilon$}
+  \KwOut{Rigid transform $T$}
+  $h\leftarrow 0$\;
+  \For {$i = 1$ to $L$} {
+    $B\leftarrow$ SELECTCOPLANARBASE($P$)\;
+    $U\leftarrow$ FINDCONGRUENT($B,Q,\delta$)\;
+    $U\leftarrow$ FILTERCONGRUENT($B,U,\epsilon$)\;
+    \ForAll {4-points coplannar sets $U_i\in U$} {
+      $T_i\leftarrow$ best rigid transform that aligns $B$ to $U_i$ in the least square sense\;
+      Find $S_i\subseteq P$, such that $d(T_i(S_i), Q)\leq\delta$\;
+    }
+    $k\leftarrow arg\;\underset{i}{max}\left\{|S_i|\right\}$\;
+    \If {$|S_k| > h$} {
+      $h\leftarrow |S_k|$\;
+      $T\leftarrow T_k$\;
+    }
+    \Return $T$\;
+  }
+  \BlankLine
+  \BlankLine
+  \BlankLine
+  \BlankLine
+  \SetKwProg{Def}{def}{:}{}
+  \Def{FILTERCONGRUENT($B:=\left\{\mathbf{b}_1,\mathbf{b}_2,\mathbf{b}_3,\mathbf{b}_4\right\},U,\epsilon)$} {
+    $U'\leftarrow \varnothing$\;
+    $a\leftarrow \overrightarrow{\mathbf{b}_1\mathbf{b}_2}\cdot \overrightarrow{\mathbf{b}_3\mathbf{b}_4}$\;
+    \ForAll {$U_i:=\left\{\mathbf{q}_1,\mathbf{q}_2,\mathbf{q}_3,\mathbf{q}_4\right\}\in U$} {
+      $a'\leftarrow \overrightarrow{\mathbf{q}_1\mathbf{q}_2}\cdot \overrightarrow{\mathbf{q}_3\mathbf{q}_4}$\;
+      \If {$a'\in [a-\epsilon,a+\epsilon]\cup [-a-\epsilon,-a+\epsilon]$} {
+        $U'\leftarrow \left\{U',U_i\right\}$\;
+      }
+    }
+    \Return $U'$\;
+  }
+\end{algorithm}
 
 \subsection{Outlier filter}
 从图~\ref{fig:match_diagram}其实可以看出目标点云有许多点并不属于目标物体，尤其是检测结果没有mask只能使用bbox分割目标时，不属于目标物体的离群点就尤其的多。因此，为了提高最终的匹配精度，除去这些离群点十分有必要，Outlier filter模块的作用就是根据Angle-fixed 4PCS输出的初始刚体变换来去除点云数据中的离群点，从而提升下一步ICP算法匹配的精度，使最终估计的位姿精度提高。
@@ -245,10 +281,39 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 \section{点云匹配实验}
 为了评价所设计的算法A4PCS-ICP，考察其匹配精度以及时间性能，本文设计了位姿估计的实验，不但考察了A4PCS-ICP的性能，还与其他一些算法作比较，验证了A4PCS-ICP算法的匹配的精确度。
 
-@todo: 点云匹配实验
+\subsection{实验内容}
+实验在多了点云匹配的数据集上测试了A4PCS-ICP算法和一个基于局部特征描述子和RANSAC的算法LD-RANSAC\cite{li2005multiscale}。数据集中的点云数据有从激光扫描获取的、深度摄像头采集的、双目摄像头重构的，并且里面的模型也多种多样，有人造物、纹理缺少的物体，光滑的物体，粗糙的物体等。与A4PCS-ICP对比的LD-RANSAC算法使用了基于spin-image的描述子\cite{johnson1999using}，LD-RANSAC的具体实现直接使用了PCL（Point Cloud Library）中的相关代码，人工配置了算法的参数以达到较好的匹配效果。
+
+实验主要考察点云匹配的误差以及算法的运行时间，点云匹配的误差定义为两个点云之间的RMS误差:
+\begin{equation}
+  S = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P')}\norm{q_i-p_j}^2}}
+\end{equation}
+显然RMS误差越小，点云的匹配效果越好，精度越高。
+
+\subsection{实验结果}
+为了考察算法的精度，通过对输入数据增加高斯噪声，来观察算法在不同大小噪声下的RMS误差，A4PCS-ICP算法和LD-RANSAC算的RMS误差随高斯噪声方差的变化曲线如图\ref{fig:err-noise}所示。
+\begin{figure}[ht]
+  \centering
+  @TODO: error-noise plot
+  \caption{匹配误差随噪声变化曲线}
+  \label{fig:err-noise}
+\end{figure}
+图中可以看出A4PS-ICP比LD-RANSAC算法有更小的误差，并且A4PCS-ICP对噪声也具有高强的鲁棒性。
+
+为了考察算法的时间性能，通过对输入数据进行降采样（uniform sampling），变化uniform sampling的采集间距来变化输入点云的数量大小，不同点云数量大小下算法的运算时间的变化曲线如图\ref{fig:time-size}所示。
+\begin{figure}[ht]
+  \centering
+  @TODO: time-size plot
+  \caption{匹配时间随点云数量大小变化曲线}
+  \label{fig:time-size}
+\end{figure}
+图中可以看出A4PCS-ICP的运算时间比LD-RANSAC少，并且随着点云数量的增加其运算时间的差距越来越大。
+
+综上，A4PCS-ICP算法相比LD-RANSAC算法具有更高的匹配精度，对噪声的鲁棒性也更强，并且算法的时间复杂度也更小。
 
 \section{本章小结}
-@todo: matcher 小结
+本章在4PCS算法的基础上，针对其缺点，提出了A4PCS算法，减少了算法的运算时间；然后为了提高匹配精度，将A4PCS算法与ICP算法相结合构成A4PCS-ICP算法。最后通过实验与LD-RANSAC算法相比较，实验表明A4PCS-ICP算法相比LD-RANSAC算法具有更高的匹配精度，对噪声的鲁棒性也更强，并且算法的时间复杂度也更小。
+
 
 %%% Local Variables:
 %%% TeX-master: "../thesis.tex"

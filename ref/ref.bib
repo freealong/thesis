@@ -23,30 +23,19 @@ title = {{Geometric camera calibration using circular control points}},
 volume = {22},
 year = {2000}
 }
-
 @article{Staranowicz2014,
-author = {Staranowicz, Aaron and Brown, Garrett R and Morbidi, Fabio and Mariottini, Gian-luca},
-file = {:home/yongqi/papers/6bc1e45c39cbb603ea288200e9d560476178.pdf:pdf},
-keywords = {camera calibration,com-,kinect,rgb-depth cameras},
-mendeley-groups = {bin-picking},
-pages = {265--278},
-title = {{Easy-to-Use and Accurate Calibration of RGB-D Cameras from Spheres}},
-year = {2014}
+title={Easy-to-use and accurate calibration of rgb-d cameras from spheres},
+author={Staranowicz, Aaron and Brown, Garrett R and Morbidi, Fabio and Mariottini, Gian Luca},
+booktitle={Pacific-Rim Symposium on Image and Video Technology},
+pages={265--278},
+year={2013},
+organization={Springer}
 }
-
 @article{Brown1966,
-author="BROWN, D. C.",
-title="Decentering Distortion of Lenses",
-journal="Photogrammetric Engineering and Remote Sensing",
-ISSN="",
-publisher="",
-year="1966",
-month="",
-volume="",
-number="",
-pages="",
-URL="https://ci.nii.ac.jp/naid/10022411406/en/",
-DOI="",
+  title={Decentering distortion of lenses},
+  author={Brown, Duane C},
+  journal={Photogrammetric Engineering and Remote Sensing},
+  year={1966}
 }
 
 @article{Zhang2002,
@@ -90,59 +79,36 @@ url = {http://www.bmva.org/bmvc/2008/papers/269.html},
 year = {2008}
 }
 
-@article{Loop2001,
-abstract = {Image rectification is the process of applying a pair of 2D$\backslash$nprojective transforms, or homographies, to a pair of images whose$\backslash$nepipolar geometry is known so that epipolar lines in the original images$\backslash$nmap to horizontally aligned lines in the transformed images. We propose$\backslash$na novel technique for image rectification based on geometrically well$\backslash$ndefined criteria such that image distortion due to rectification is$\backslash$nminimized. This is achieved by decomposing each homography into a$\backslash$nspecialized projective transform, a similarity transform, followed by a$\backslash$nshearing transform. The effect of image distortion at each stage is$\backslash$ncarefully considered},
-author = {Loop, C. and {Zhengyou Zhang}},
-doi = {10.1109/CVPR.1999.786928},
-file = {:home/yongqi/papers/b400458474493f8bbe547d7a02e8b0956795.pdf:pdf},
-isbn = {0-7695-0149-4},
-issn = {1063-6919},
-journal = {Proceedings. 1999 IEEE Computer Society Conference on Computer Vision and Pattern Recognition (Cat. No PR00149)},
-mendeley-groups = {bin-picking},
-pages = {125--131},
-pmid = {786928},
-title = {{Computing rectifying homographies for stereo vision}},
-url = {http://ieeexplore.ieee.org/document/786928/},
-volume = {1},
-year = {2001}
+@inproceedings{Loop2001,
+  title={Computing rectifying homographies for stereo vision},
+  author={Loop, Charles and Zhang, Zhengyou},
+  booktitle={Computer Vision and Pattern Recognition, 1999. IEEE Computer Society Conference on.},
+  volume={1},
+  pages={125--131},
+  year={1999},
+  organization={IEEE}
 }
 @article{Ren,
-archivePrefix = {arXiv},
-arxivId = {arXiv:1506.01497v3},
-author = {Ren, Shaoqing and He, Kaiming and Girshick, Ross and Sun, Jian},
-eprint = {arXiv:1506.01497v3},
-file = {:home/yongqi/papers/Ren et al. - Unknown - Faster R-CNN Towards Real-Time Object Detection with Region Proposal Networks.pdf:pdf},
-mendeley-groups = {DeepLearning},
-pages = {1--14},
-title = {{Faster R-CNN : Towards Real-Time Object Detection with Region Proposal Networks}},
-year = {2016}
+  title={Faster r-cnn: Towards real-time object detection with region proposal networks},
+  author={Ren, Shaoqing and He, Kaiming and Girshick, Ross and Sun, Jian},
+  booktitle={Advances in neural information processing systems},
+  pages={91--99},
+  year={2015}
 }
 @article{He2017,
-abstract = {We present a conceptually simple, flexible, and general framework for object instance segmentation. Our approach efficiently detects objects in an image while simultaneously generating a high-quality segmentation mask for each instance. The method, called Mask R-CNN, extends Faster R-CNN by adding a branch for predicting an object mask in parallel with the existing branch for bounding box recognition. Mask R-CNN is simple to train and adds only a small overhead to Faster R-CNN, running at 5 fps. Moreover, Mask R-CNN is easy to generalize to other tasks, e.g., allowing us to estimate human poses in the same framework. We show top results in all three tracks of the COCO suite of challenges, including instance segmentation, bounding-box object detection, and person keypoint detection. Without tricks, Mask R-CNN outperforms all existing, single-model entries on every task, including the COCO 2016 challenge winners. We hope our simple and effective approach will serve as a solid baseline and help ease future research in instance-level recognition. Code will be made available.},
-archivePrefix = {arXiv},
-arxivId = {1703.06870},
-author = {He, Kaiming and Gkioxari, Georgia and Doll{\'{a}}r, Piotr and Girshick, Ross},
-eprint = {1703.06870},
-file = {:home/yongqi/papers/He et al. - 2017 - Mask R-CNN.pdf:pdf},
-mendeley-groups = {DeepLearning},
-title = {{Mask R-CNN}},
-url = {http://arxiv.org/abs/1703.06870},
-year = {2017}
+  title={Mask r-cnn},
+  author={He, Kaiming and Gkioxari, Georgia and Doll{\'a}r, Piotr and Girshick, Ross},
+  booktitle={Computer Vision (ICCV), 2017 IEEE International Conference on},
+  pages={2980--2988},
+  year={2017},
+  organization={IEEE}
 }
 @article{Krizhevsky2012,
-abstract = {We trained a large, deep convolutional neural network to classify the 1.2 million high-resolution images in the ImageNet LSRVRC-2010 contest into the 1000 different classes. On the test data, we achieved top-1 and top-5 error rates of 37.5{\%} and 17.0{\%} which is considerably better than the previous state of the art. The neural network, which has 60 million paramters and 650,000 neurons, consists of five convolutional layers, some of which are followed by max-pooling layers, and three fully connected layers with a final 1000-way softmax. To make training faster, we used non-saturating neurons and a very efficient GPU implementation of the convolutional operation. To reduce overfitting in the fully-connected layers, we employed a recently-developed method called 'dropout' that proved to be effective. We also entered a variant of the model in the ILSVRC-2012 competition and achievd a top-5 test error rate of 15.3{\%}, compared to 26.2{\%} achieved by the second-best entry.},
-archivePrefix = {arXiv},
-arxivId = {1102.0183},
-author = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E},
-doi = {http://dx.doi.org/10.1016/j.protcy.2014.09.007},
-eprint = {1102.0183},
-isbn = {9781627480031},
-issn = {10495258},
-journal = {Advances In Neural Information Processing Systems},
-pages = {1--9},
-pmid = {7491034},
-title = {{Alexnet}},
-year = {2012}
+  title={Imagenet classification with deep convolutional neural networks},
+  author={Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E},
+  booktitle={Advances in neural information processing systems},
+  pages={1097--1105},
+  year={2012}
 }
 @misc{imagenet,
   author = {ImageNet},
@@ -151,39 +117,14 @@ year = {2012}
   url = {http://www.image-net.org},
   note = {[Online; accessed 1-February-2018]}
 }
-@article{Gupta2014,
-archivePrefix = {arXiv},
-arxivId = {arXiv:1407.5736v1},
-author = {Gupta, Saurabh and Girshick, Ross B and Arbel{\'{a}}ez, Pablo Andr{\'{e}}s and Malik, Jitendra},
-doi = {10.1007/978-3-319-10584-0\_23},
-eprint = {arXiv:1407.5736v1},
-file = {:home/yongqi/papers/Gupta et al. - 2014 - Learning Rich Features from {\{}RGB-D{\}} Images for Object Detection and Segmentation.pdf:pdf},
-isbn = {9783319105833},
-issn = {16113349},
-journal = {Computer Vision - {\{}ECCV{\}} 2014 - 13th European Conference, Zurich, Switzerland, September 6-12, 2014, Proceedings, Part {\{}VII{\}}},
-keywords = {object detection,object segmentation,rgb-d perception},
-mendeley-groups = {3DVersion},
-pages = {345--360},
-title = {{Learning Rich Features from {\{}RGB-D{\}} Images for Object Detection and Segmentation}},
-url = {http://dx.doi.org/10.1007/978-3-319-10584-0{\_}23},
-volume = {8695},
-year = {2014}
+@article{Gupta2013,
+  title={Perceptual organization and recognition of indoor scenes from RGB-D images},
+  author={Gupta, Saurabh and Arbelaez, Pablo and Malik, Jitendra},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2013 IEEE Conference on},
+  pages={564--571},
+  year={2013},
+  organization={IEEE}
 }
-@inproceedings{Gupta2013,
-author = {Gupta, Saurabh and Arbelaez, Pablo and Malik, Jitendra},
-booktitle = {2013 IEEE Conference on Computer Vision and Pattern Recognition},
-doi = {10.1109/CVPR.2013.79},
-file = {:home/yongqi/papers/06618923.pdf:pdf},
-isbn = {978-0-7695-4989-7},
-mendeley-groups = {3DVersion},
-month = {jun},
-pages = {564--571},
-publisher = {IEEE},
-title = {{Perceptual Organization and Recognition of Indoor Scenes from RGB-D Images}},
-url = {http://ieeexplore.ieee.org/document/6618923/},
-year = {2013}
-}
-
 @misc{kinect,
   author = {Microsoft},
   year = {2012},
@@ -211,7 +152,7 @@ year = {2013}
   journal={arXiv preprint arXiv:1409.1556},
   year={2014}
 }
-@inproceedings{xie2017aggregated,
+@article{xie2017aggregated,
   title={Aggregated residual transformations for deep neural networks},
   author={Xie, Saining and Girshick, Ross and Doll{\'a}r, Piotr and Tu, Zhuowen and He, Kaiming},
   booktitle={Computer Vision and Pattern Recognition (CVPR), 2017 IEEE Conference on},
@@ -219,7 +160,7 @@ year = {2013}
   year={2017},
   organization={IEEE}
 }
-@inproceedings{lin2017feature,
+@article{lin2017feature,
   title={Feature pyramid networks for object detection},
   author={Lin, Tsung-Yi and Doll{\'a}r, Piotr and Girshick, Ross and He, Kaiming and Hariharan, Bharath and Belongie, Serge},
   booktitle={CVPR},
@@ -228,14 +169,14 @@ year = {2013}
   pages={4},
   year={2017}
 }
-@inproceedings{he2016deep,
+@article{he2016deep,
   title={Deep residual learning for image recognition},
   author={He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
   booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
   pages={770--778},
   year={2016}
 }
-@inproceedings{aiger20084,
+@article{aiger20084,
   title={4-points congruent sets for robust pairwise surface registration},
   author={Aiger, Dror and Mitra, Niloy J and Cohen-Or, Daniel},
   booktitle={ACM Transactions on Graphics (TOG)},
@@ -245,7 +186,7 @@ year = {2013}
   year={2008},
   organization={ACM}
 }
-@inproceedings{besl1992method,
+@article{besl1992method,
   title={Method for registration of 3-D shapes},
   author={Besl, Paul J and McKay, Neil D},
   booktitle={Sensor Fusion IV: Control Paradigms and Data Structures},
@@ -254,7 +195,7 @@ year = {2013}
   year={1992},
   organization={International Society for Optics and Photonics}
 }
-@inproceedings{li2005multiscale,
+@article{li2005multiscale,
   title={Multiscale Features for Approximate Alignment of Point-based Surfaces.},
   author={Li, Xinju and Guskov, Igor},
   booktitle={Symposium on geometry processing},
@@ -272,7 +213,7 @@ year = {2013}
   year={1997},
   publisher={IEEE}
 }
-@inproceedings{bolles1981ransac,
+@article{bolles1981ransac,
   title={A RANSAC-Based Approach to Model Fitting and Its Application to Finding Cylinders in Range Data.},
   author={Bolles, Robert C and Fischler, Martin A},
   booktitle={IJCAI},
@@ -289,7 +230,7 @@ year = {2013}
   year={2014},
   publisher={Elsevier}
 }
-@inproceedings{rusu2009fast,
+@article{rusu2009fast,
   title={Fast point feature histograms (FPFH) for 3D registration},
   author={Rusu, Radu Bogdan and Blodow, Nico and Beetz, Michael},
   booktitle={Robotics and Automation, 2009. ICRA'09. IEEE International Conference on},
@@ -307,7 +248,7 @@ year = {2013}
   year={2013},
   publisher={Springer}
 }
-@inproceedings{goodrich1994practical,
+@article{goodrich1994practical,
   title={Practical methods for approximate geometric pattern matching under rigid motions:(preliminary version)},
   author={Goodrich, Michael T and Mitchell, Joseph SB and Orletsky, Mark W},
   booktitle={Proceedings of the tenth annual symposium on Computational geometry},
@@ -372,7 +313,7 @@ year = {2013}
   year={2011},
   publisher={SAGE Publications Sage UK: London, England}
 }
-@inproceedings{hinterstoisser2012model,
+@article{hinterstoisser2012model,
   title={Model based training, detection and pose estimation of texture-less 3d objects in heavily cluttered scenes},
   author={Hinterstoisser, Stefan and Lepetit, Vincent and Ilic, Slobodan and Holzer, Stefan and Bradski, Gary and Konolige, Kurt and Navab, Nassir},
   booktitle={Asian conference on computer vision},
@@ -389,4 +330,103 @@ year = {2013}
   pages={103--106},
   year={2007},
   publisher={Emerald Group Publishing Limited}
+}
+@article{daniilidis1999hand,
+  title={Hand-eye calibration using dual quaternions},
+  author={Daniilidis, Konstantinos},
+  journal={The International Journal of Robotics Research},
+  volume={18},
+  number={3},
+  pages={286--298},
+  year={1999},
+  publisher={SAGE Publications}
+}
+@article{swain1991color,
+  title={Color indexing},
+  author={Swain, Michael J and Ballard, Dana H},
+  journal={International journal of computer vision},
+  volume={7},
+  number={1},
+  pages={11--32},
+  year={1991},
+  publisher={Springer}
+}
+@article{lowe1999object,
+  title={Object recognition from local scale-invariant features},
+  author={Lowe, David G},
+  booktitle={Computer vision, 1999. The proceedings of the seventh IEEE international conference on},
+  volume={2},
+  pages={1150--1157},
+  year={1999},
+  organization={Ieee}
+}
+@article{matas2004robust,
+  title={Robust wide-baseline stereo from maximally stable extremal regions},
+  author={Matas, Jiri and Chum, Ondrej and Urban, Martin and Pajdla, Tom{\'a}s},
+  journal={Image and vision computing},
+  volume={22},
+  number={10},
+  pages={761--767},
+  year={2004},
+  publisher={Elsevier}
+}
+@article{chum2004enhancing,
+  title={Enhancing RANSAC by generalized model optimization},
+  author={Chum, Ondrej and Matas, Jir{\i} and Obdrzalek, Stepan},
+  booktitle={Proc. of the ACCV},
+  volume={2},
+  pages={812--817},
+  year={2004}
+}
+@article{matoba2001real,
+  title={Real-time three-dimensional object recognition with multiple perspectives imaging},
+  author={Matoba, Osamu and Tajahuerce, Enrique and Javidi, Bahram},
+  journal={Applied optics},
+  volume={40},
+  number={20},
+  pages={3318--3325},
+  year={2001},
+  publisher={Optical Society of America}
+}
+@article{Gupta2014,
+  title={Learning rich features from RGB-D images for object detection and segmentation},
+  author={Gupta, Saurabh and Girshick, Ross and Arbel{\'a}ez, Pablo and Malik, Jitendra},
+  booktitle={European Conference on Computer Vision},
+  pages={345--360},
+  year={2014},
+  organization={Springer}
+}
+@article{gupta2015aligning,
+  title={Aligning 3D models to RGB-D images of cluttered scenes},
+  author={Gupta, Saurabh and Arbel{\'a}ez, Pablo and Girshick, Ross and Malik, Jitendra},
+  booktitle={Computer Vision and Pattern Recognition (CVPR), 2015 IEEE Conference on},
+  pages={4731--4740},
+  year={2015},
+  organization={IEEE}
+}
+@incollection{alexandre20163d,
+  title={3D object recognition using convolutional neural networks with transfer learning between input channels},
+  author={Alexandre, Lu{\'\i}s A},
+  booktitle={Intelligent Autonomous Systems 13},
+  pages={889--898},
+  year={2016},
+  publisher={Springer}
+}
+@article{jonschkowski2016probabilistic,
+  title={Probabilistic multi-class segmentation for the amazon picking challenge},
+  author={Jonschkowski, Rico and Eppner, Clemens and H{\"o}fer, Sebastian and Mart{\'\i}n-Mart{\'\i}n, Roberto and Brock, Oliver},
+  booktitle={Intelligent Robots and Systems (IROS), 2016 IEEE/RSJ International Conference on},
+  pages={1--7},
+  year={2016},
+  organization={IEEE}
+}
+@article{johnson1999using,
+  title={Using spin images for efficient object recognition in cluttered 3D scenes},
+  author={Johnson, Andrew E. and Hebert, Martial},
+  journal={IEEE Transactions on pattern analysis and machine intelligence},
+  volume={21},
+  number={5},
+  pages={433--449},
+  year={1999},
+  publisher={IEEE}
 }
