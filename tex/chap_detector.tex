@@ -51,7 +51,7 @@ Faster R-CNN的由两个核心模块构成：
 \end{itemize}
 整个网络是一个端到端（end-to-end）的目标检测网络，输入图片，输出图片中检测到的目标的类别和Bounding Box。RPN模块输出候选框，形象地说，RPN模块告诉Fast R-CNN模块去哪里检测目标，Fast R-CNN模块输出检测结果。
 
-@todo: faster r-cnn more specific ?
+% @improve: faster r-cnn more specific ?
 
 
 \subsection{HHA}
@@ -405,20 +405,20 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 \end{table}
 % \begin{figure}[ht]
 %   \centering
-%   \begin{tikzpicture}
-%     \begin{axis}[xlabel=IoU, ylabel=AP]
-%       \addplot[smooth, mark=*, blue] plot coordinates {
-%         (0.5,56.29)
-%         (0.75, 34.03)
-%       };
-%       \addlegendentry{Faster R-CNN}
-%       \addplot[smooth, mark=x, red] plot coordinates {
-%         (0.5,57.99)
-%         (0.75, 34.69)
-%       };
-%       \addlegendentry{3D Faster R-CNN}
-%     \end{axis}
-%   \end{tikzpicture}
+  % \begin{tikzpicture}
+  %   \begin{axis}[xlabel=IoU, ylabel=AP]
+  %     \addplot[smooth, mark=*, blue] plot coordinates {
+  %       (0.5,56.29)
+  %       (0.75, 34.03)
+  %     };
+  %     \addlegendentry{Faster R-CNN}
+  %     \addplot[smooth, mark=x, red] plot coordinates {
+  %       (0.5,57.99)
+  %       (0.75, 34.69)
+  %     };
+  %     \addlegendentry{3D Faster R-CNN}
+  %   \end{axis}
+  % \end{tikzpicture}
 %   \caption{算法在APC数据集上的精确度}
 % \end{figure}
 \begin{figure}[ht]
