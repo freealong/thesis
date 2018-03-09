@@ -349,14 +349,17 @@ APC数据集中标注的标签可以认为是每个物体在相机坐标系下�
 {\kai workpiece数据集：} 该数据集有三类物体，共2k组图片。该数据集与APC数据集最大的不同是，同一张图片中存在大量不同位姿的同种物体，并且三类物体都缺少纹理(textureless)，因此Faster R-CNN和Mask R-CNN在该数据集上的表现理论上应该大大不如3D Faster R-CNN和3D Mask R-CNN。部分数据集中的图片如图\ref{fig:wp_dataset}所示。
 \begin{figure}[ht]
   \centering
-  @todo: missing workpiece dateset figures
   \subfloat{\includegraphics[width=3.5cm]{wp_color1}}
   \hskip0.2cm
   \subfloat{\includegraphics[width=3.5cm]{wp_color2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{wp_color3}}
   \vfill
   \subfloat{\includegraphics[width=3.5cm]{wp_depth1}}
   \hskip0.2cm
   \subfloat{\includegraphics[width=3.5cm]{wp_depth2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=3.5cm]{wp_depth3}}
   \caption{workpiece数据集部分图片}
   \label{fig:wp_dataset}
 \end{figure}
@@ -423,7 +426,11 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 % \end{figure}
 \begin{figure}[ht]
   \centering
-  @todo: apc figure results
+  \subfloat{\includegraphics[width=5cm]{detect_apc_res1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=5cm]{detect_apc_res2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[width=5cm]{detect_apc_res3}}
   \caption{算法APC数据集上部分检测结果}
   \label{fig:apc_res}
 \end{figure}
@@ -447,7 +454,8 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 \end{table}
 \begin{figure}[ht]
   \centering
-  @todo: workpiece figure results
+  \subfloat{\includegraphics[width=8cm]{detect_wp_res1}}
+    % Imporve: add more detect wp res
   \caption{算法workpiece数据集上部分检测结果}
   \label{fig:wp_res}
 \end{figure}

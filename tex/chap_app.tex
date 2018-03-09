@@ -56,7 +56,8 @@
 实际搭建随机分拣系统环境如图\ref{fig:bin-picking-env}所示，图中相机固定在支架上，与机械臂构成了eye-to-hand的形式，当然也可以将相机固定在机械臂末端构成eye-in-hand形式，两种固定相机的形式略有不同，但对视觉识别算法那没有影响，只与控制流程和相机与机器人之间的标定有关系，后文会具体介绍到。嵌入式计算机通过相机采集物料箱内的图像，然后运行基于3D-MRAI的视觉系统，得出目标工件位姿，然后规划机械臂路径，通过TCP/IP通信，控制机械臂完成抓取任务，并根据机械臂的运动状态控制整个系统的流程。
 \begin{figure}[ht]
   \centering
-  %@todo: \includegraphics[width=8cm]{mz04}
+  %@todo:bin picking env
+  \includegraphics[width=10cm]{bin-picking-env}
   \caption{实际搭建随机分拣系统环境}
   \label{fig:bin-picking-env}
 \end{figure}
@@ -234,7 +235,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 
 \section{随机分拣实验}
 \subsection{实验内容}
-设计的随机分拣实验在所搭建的工作台上进行，在物料箱中随机放慢物料，如图\ref{fig:random-objects}所示，然后运行整个随机分拣系统，将物料中的全部工件分拣到另外一个箱子中，分拣完一箱后，再随机填充物料，一共统计十箱物料的抓取结果。
+设计的随机分拣实验在所搭建的工作台上进行，在物料箱中随机放慢物料，然后运行整个随机分拣系统，将物料中的全部工件分拣到另外一个箱子中，分拣完一箱后，再随机填充物料，一共统计十箱物料的抓取结果。
 
 评价系统的指标主要是系统的抓取成功率：
 \begin{equation}
