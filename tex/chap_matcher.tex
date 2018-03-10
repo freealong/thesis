@@ -221,7 +221,7 @@ Outlier filter模块的核心算法如算法\ref{alg:outlier-filter}所示。
 算法输入点集$P$和$Q$，需要参数初始刚体变换$T$，以及允许的距离误差$\delta$，由于点集$P$是由物体的CAD模型转换过来的，因此不对其进行滤波，只对点集$Q$进行离群点去除。具体方法是，首先使用$T$对点集$P$进行刚体变换；然后对变换后的点集建立kd树，建立kd树的目的是为了快速在点集$P$中找到距离某点最近的点，其查找的时间复杂度为$O(kN^{1-1/k}$，其中$k$是所建立kd树的维数，显然对于三维空间中点集为3，$N$是建立的kd树的节点个数；建立好kd树后，对点集$Q$中的每个点在kd树中找到与之距离最近的点，如果两点间的距离大于所设的参数$\delta$，则在点集Q中去除该点。实际运行Outlier filter算法的效果如图\ref{fig:outlier-filter}所示。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=13cm]{outlier-filter}
+  \includegraphics[width=15cm]{outlier-filter}
   \caption{Outlier filter效果图}
   \label{fig:outlier-filter}
 \end{figure}
