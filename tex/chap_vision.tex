@@ -1,4 +1,4 @@
-\chapter{基于RGB-D图像的3D目标检测和位姿估计算法}
+\chapter{3D目标检测与位姿估计算法}
 \label{chap:pose}
 本章介绍了本文所设计的基于RGB-D图像的3D目标检测和位姿估计算法3D-MRAI（3D Mask R-CNN with Angle-fixed-4PCS and ICP），该算法根据所提供目标的CAD模型，可以在RGB-D图中检测出目标，并给出目标的位姿。所提出的3D-MRAI算法主要有两个模块构成：检测模块和匹配模块。检测模块基于Mask R-CNN\cite{He2017}实现在3D点云中定位目标，匹配模块通过匹配目标3D模型和由检测模块定位的目标点云实现对目标的位姿估计。为了评价所设计的3D-MRAI算法的性能，本章还设计了相关实验，并与同类算法相比较，从算法的检测准确度、位姿精度和时间性能三个方面分析了算法性能。
 
@@ -862,7 +862,17 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 实验在workpiece数据集的测试集上分别运行了3D-MRAI和文献\cite{hinterstoisser2012model}中的基于LINEMOD算法的检测框架，运行实验的计算机有两块Intel(R) Xeon(R) E5-2683 v3(2.00GHz)的CPU，4块TITAN X GPU，由于3D-MRAI有深度神经网络所以使用了一块GPU和一块CPU，Hinterstorisser等人的算法不需要GPU，只使用了一块CPU。
 
 \subsection{实验结果}
-分别统计3D-MRAI和LINEMOD在测试集上的运行结果，变化系数$k_m$统计算法的准确率如表\ref{tab:mrai}所示。
+\begin{figure}[ht]
+  \centering
+  \subfloat{\includegraphics[height=3.4cm]{3dmrai-res1}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[height=3.4cm]{3dmrai-res2}}
+  \hskip0.2cm
+  \subfloat{\includegraphics[height=3.4cm]{3dmrai-res3}}
+  \caption{3D-MRAI运算结果可视化图}
+  \label{fig:3dmrai-res}
+\end{figure}
+3D-MRAI算法在workpiece数据集上一些测试用例的运算结果可视化如图\ref{fig:3dmrai-res}所示。变化系数$k_m$，根据3D-MRAI和Hinterstoisser等人的算法在测试集上的运行结果，统计算法的准确率如表\ref{tab:mrai}所示。
 \begin{table}[ht]
   \centering
   \begin{tabular}{ccccccc}

@@ -105,9 +105,10 @@ Camera模块主要实现对偶RGB-D图像的匹配与合成，旨在提供高质
 \item PCL(Point Cloud Library) >= 1.7.0
 \item Tensorflow >= 1.2.0
 \item Glog >= 0.3.4
+\item Qt >= 5.7.0
 \item glfw >= 3.1.2
 \end{itemize}
-上述所有的软件都是跨平台、开源的软件，librealsense是所使用的RGB-D相机SR300的驱动以及SDK，系统主要使用它获取相机采集的图片；OpenCV是一个基于BSD许可（开源）发行的跨平台计算机视觉库，系统主要使用OpenCV完成对相机采集图像的处理以及对偶RGB-D相机图像的合成与匹配算法；PCL是一个通用的开源点云库，它实现了大量点云相关的通用算法和高效数据结构，涉及到点云获取、滤波、分割、配准、检索、特征提取、识别、追踪、曲面重建、可视化等。支持多种操作系统平台，可在Windows、Linux、Android、Mac OS X、部分嵌入式实时系统上运行，系统主要使用PCL完成一些点云相关的算法；TensorFlow是谷歌基于DistBelief进行研发的深度学习框架，系统主要使用Tensorflow完成3D-MRAI算法中的深度神经网络；Glog是谷歌开发的一个C++语言的应用级日志记录框架，提供了C++风格的流操作和各种助手宏，系统主要使用Glog完成软件的日志记录；glfw是一个OpenGL图形库，系统主要使用glfw完成GUI模块的设计。
+上述所有的软件都是跨平台、开源的，librealsense是所使用的RGB-D相机SR300的驱动以及SDK，系统主要使用它获取相机采集的图片；OpenCV是一个基于BSD许可（开源）发行的跨平台计算机视觉库，系统主要使用OpenCV完成对相机采集图像的处理以及对偶RGB-D相机图像的合成与匹配算法；PCL是一个通用的开源点云库，它实现了大量点云相关的通用算法和高效数据结构，涉及到点云获取、滤波、分割、配准、检索、特征提取、识别、追踪、曲面重建、可视化等。支持多种操作系统平台，可在Windows、Linux、Android、Mac OS X、部分嵌入式实时系统上运行，系统主要使用PCL完成一些点云相关的算法；TensorFlow是谷歌基于DistBelief进行研发的深度学习框架，系统主要使用Tensorflow完成3D-MRAI算法中的深度神经网络；Glog是谷歌开发的一个C++语言的应用级日志记录框架，提供了C++风格的流操作和各种助手宏，系统主要使用Glog完成软件的日志记录；glfw是一个OpenGL图形库，系统主要使用glfw完成3D点云的可视化；Qt是跨平台C++图形用户界面应用程序开发框架，系统主要使用Qt完成GUI模块的实现。
 
 \emph{Camera module:}
 Camera模块的主要接口是一个虚基类Camera，如图\ref{fig:camera-uml}所示。
@@ -216,19 +217,29 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 将工件位姿从相机坐标系变换到机器人坐标系后，便可得机器人抓取的位姿，机器人抓取的位姿与工件的位姿是事先标定好的，并且为了提高抓取的成功率，对一个工件设了多组抓取位姿，根据工件的位姿选取合适的抓取位姿。
 
 \emph{GUI module:}
-为了可视化视觉系统的检测情况，设计了GUI模块实时展示检测结果，由于系统中存在3D的点云，因此采用OpenGL库在三维空间中可视化结果，并且可以对程序进行简单的控制。三维可视化的界面如图\ref{fig:gui}所示。
+为了可视化视觉系统的检测情况，设计了GUI模块实时展示检测结果，由于系统中存在2D的彩色图和深度图，以及3D的点云，整个模块采用Qt库+OpenGL库设计完成。Qt库主要完成一些图形界面和2D图的展示，OpenGL主要实现3D点云在三维空间中的可视化。GUI模块除了对视觉系统进行可视化，也可以对程序进行简单的控制。GUI模块可视化的界面如图\ref{fig:gui}所示。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=10cm]{gui}
-  \caption{视觉系统三维可视化}
+  \subfloat[彩色图视图]{
+    \includegraphics[width=4.5cm]{gui-color}
+  }
+  \hskip0.1cm
+  \subfloat[深度图视图]{
+    \includegraphics[width=4.5cm]{gui-depth}
+  }
+  \hskip0.1cm
+  \subfloat[3D点云视图]{
+    \includegraphics[width=4.5cm]{gui-cloud}
+  }
+  \caption{视觉系统可视化界面}
   \label{fig:gui}
 \end{figure}
-三维可视化界面中标出了相机坐标系、检测出要抓取的工件的位姿，整个场景是相机采集到的3D数据，红色部分点云是将目标工件CAD模型变换到所计算得到的工件位姿，因此红色点云与相机采集到的3D目标点云相重合说明视觉系统的检测正确。整个界面是3D的，可以通过鼠标放大、缩小、旋转，也可通过键盘控制视角的前进后退左右移动，全方位360度观察当前检测结果，如图\ref{fig:view-pose}所示，在不同视角下观察检测结果。除此之外，还可以通过键盘保存当前所展示的点云和其他一些数据，方便进一步分析和观察。
+图中展示了GUI模块可视化界面的三种视图模式：彩色图视图、深度图视图、3D点云视图，其中3D点云视图模式最为强大。3D点云视图标出了相机坐标系、检测出要抓取的工件的位姿，红色部分点云是将目标工件CAD模型变换到所计算得到的工件位姿，因此红色点云与相机采集到的3D目标点云相重合说明视觉系统的检测正确。在3D点云视图模式下，可以通过鼠标放大、缩小、旋转，也可通过键盘控制视角的前进后退左右移动，全方位360度观察当前检测结果，如图\ref{fig:view-pose}所示，在不同视角下观察检测结果。除此之外，还可以通过键盘保存当前所展示的点云和其他一些数据，方便进一步分析和观察。
 \begin{figure}[ht]
   \centering
-  \subfloat{\includegraphics[width=7cm]{ang1}}
+  \subfloat{\includegraphics[height=6cm]{ang1}}
   \hfill
-  \subfloat{\includegraphics[width=7cm]{ang2}}
+  \subfloat{\includegraphics[height=6cm]{ang2}}
   \caption{不同视角下观察检测结果}
   \label{fig:view-pose}
 \end{figure}
@@ -263,7 +274,6 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 \end{equation}
 对于评价视觉系统来说，我们更关心系统响应时间$T_r$，对于评价整个Bin-Picking系统来说，显然工作周期$T$更重要。
 \subsection{实验结果}
-所设计的随机分拣系统的硬件系统抓取完十箱物料后，统计每箱的成功率、平均响应时间、平均抓取时间、平均放置时间和平均工作周期，绘制成表\ref{tab:app_res}以及图\ref{fig:app_res}。
 \begin{table}[ht]
   \centering
   \begin{tabular}{cccccc}
@@ -440,6 +450,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
   \caption{随机分拣实验结果}
   \label{fig:app_res}
 \end{figure}
+所设计的随机分拣系统的硬件系统抓取完十箱物料后，统计每箱的成功率、平均响应时间、平均抓取时间、平均放置时间和平均工作周期，绘制成表\ref{tab:app_res}以及图\ref{fig:app_res}。
 从表中可以发现所设计的基于3D-MRAI的随机分拣系统的平均抓取成功率为100\%，但理论上随着抓取次数的增加，个人认为系统一定会出现抓取失败的情况，并且实验中所使用的物料也相对单一，不同的物料理论上也会影响视觉的识别效果，因此换一种物料系统的抓取成功率也可能达不到100\%。但总体上来说，此次实验100\%的成功率充分说明了所设计的Bin-Picking视觉系统完全能满足一般随机分拣任务，成功率高。
 
 另外，视觉系统的响应时间为$715ms$左右，分拣系统的工作周期为$12.04s$左右，从表中数据可以发现工作周期基本上为抓取时间和放置时间之和，也就是完全是机械臂运动的时间，除了一开始系统启动时会增加额外的响应时间，但这对真个工作时间来说可以忽律不计，因此，所设计的基于3D-MRAI算法的Bin-Picking视觉系统在时间上完全满足一般分拣任务的要求，实时性高。
