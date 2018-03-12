@@ -23,13 +23,13 @@
 \section{3D-MRAI具体实现}
 对与3D-MRAI输入的RGB图像和深度图，可以由对偶RGB-D获得，具体见第~\ref{chap:rgbd}~章。目标物体的CAD模型也容易获得，对于工厂中的工件，往往是有其CAD模型的，对于一般物体，可以通过3D扫描仪重构出来，当然也可以使用本文设计的对偶RGB-D相机采集重构出来。
 
-获得目标物体的CAD模型后，为了方便后续需处理，我们需要将其转换为点云。具体如何转换的话，基本思想是参考Uniform Sampling算法，Uniform Sampling算法的核心思想是以3D栅格中所有点的质心代替这些点，从而达到降采样。类似地，对于CAD模型也建立3D栅格，但由于无法获得3D栅格总所有点，因此判断CAD模型是否穿过3D栅格，如果穿过3D栅格，则在该3D栅格中心出增加一个点。显然3D栅格的边长越大，转换后的点云数量越小，精度越低，考虑到所使用相机生成点云的精度，因使CAD模型转换后的点云的精度与相机采集的点云的精度近似，实际取3D栅格边长为1mm，一个实际工件的CAD模型和以1mm为边长进行采样转换后的模型点云如图~\ref{fig:model-pc}~所示。
+获得目标物体的CAD模型后，为了方便后续需处理，我们需要将其转换为点云。具体如何转换的话，基本思想是参考Uniform Sampling算法，Uniform Sampling算法的核心思想是以3D栅格中所有点的质心代替这些点，从而达到降采样。类似地，对于CAD模型也建立3D栅格，但由于无法获得3D栅格总所有点，因此判断CAD模型是否穿过3D栅格，如果穿过3D栅格，则在该3D栅格中心出增加一个点。显然3D栅格的边长越大，转换后的点云数量越小，精度越低，考虑到所使用相机生成点云的精度，因使CAD模型转换后的点云的精度与相机采集的点云的精度近似，实际取3D栅格边长为1mm，一个实际工件的CAD模型和以1mm为边长进行采样转换后的模型点云如图~\ref{fig:model-cloud}~所示。
 \begin{figure}[ht]
   \centering
   \subfloat[原CAD模型]{\includegraphics[width=7cm]{object-model}}
   \hskip1cm
   \subfloat[转换后点云]{\includegraphics[width=6cm]{object-pointcloud}}
-  \label{fig:model-pc}
+  \label{fig:model-cloud}
   \caption{CAD模型和转换后的点云}
 \end{figure}
 此外，还需要将深度图转换为点云，这一步则相对简单，只要通过深度摄像头的内参矩阵反投影到三维空间即可，详细见第~\ref{chap:rgbd}~章。
@@ -85,7 +85,7 @@
 实验在workpiece数据集的测试集上分别运行了3D-MRAI和文献\cite{hinterstoisser2012model}中的基于LINEMOD算法的检测框架，运行实验的计算机有两块Intel(R) Xeon(R) E5-2683 v3(2.00GHz)的CPU，4块TITAN X GPU，由于3D-MRAI有深度神经网络所以使用了一块GPU和一块CPU，Hinterstorisser等人的算法不需要GPU，只使用了一块CPU。
 
 \subsection{实验结果}
-% @TODO: exp detect results figures
+% @improve: exp detect results figures
 分别统计3D-MRAI和LINEMOD在测试集上的运行结果，变化系数$k_m$统计算法的准确率如表\ref{tab:mrai}所示。
 \begin{table}[ht]
   \centering

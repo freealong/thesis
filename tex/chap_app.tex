@@ -1,13 +1,13 @@
-\chapter{算法应用——Bin-Picking}
+\chapter{3D-MRAI算法应用——Bin-Picking}
 \label{chap:app}
 本章主要介绍3D-MRAI算法的实际应用——Bin-Picking。首先介绍一下Bin-Picking相关背景，以及近些年的具体研究与发展；然后详细介绍基于3D-MRAI算法所开发的一套解决Bin-Picking问题的视觉系统，包括硬件的选型、开发环境、系统的框架设计以及算法的具体实现；最后介绍了针对所开发的Bin-Picking视觉系统，进行了随机抓取的实验，测试了系统抓取的成功率以及系统的抓取速度。
 
 \section{Bin-Picking背景与现状}
-使用机器人分拣散乱的工件的问题，在学术上我们称之为Bin-Picking，Bin-Picking并不是一个崭新的问题，学术上对这个问题的研究以及有了五十多年的历史。典型的Bin-Picking系统主要包括三部分：机器人、视觉检测模块和计算机控制模块。其中，视觉检测模块是整个Bin-Picking系统的核心部分，通过视觉检测模块对存放散乱工件的物料箱进行分析，获取目标工件的位姿，计算机控制模块根据视觉检测模块的检测结果规划机器人的运动路径，然后机器人执行完成工件的抓取。
+使用机器人分拣散乱的工件的问题，在学术上我们称之为Bin-Picking，Bin-Picking并不是一个崭新的问题，学术上对这个问题的研究已经有了五十多年的历史。典型的Bin-Picking系统主要包括三部分：机器人、视觉检测模块和计算机控制模块。其中，视觉检测模块是整个Bin-Picking系统的核心部分，通过视觉检测模块对存放散乱工件的物料箱进行分析，获取目标工件的位姿，计算机控制模块根据视觉检测模块的检测结果规划机器人的运动路径，然后机器人执行完成工件的抓取。
 
 传统的Bin-Picking中检测估计目标工件的算法大致可以分为两类：一类是基于特征匹配的算法，另一类是基于模板匹配的算法。基于特征匹配的算法，通过某些特征描述目标工件，如边角、空洞等特征，然后通过分析特征在空间中的旋转变换和平移变换来估计目标零件的位姿。这一类方法受工件纹理或者结构以及传感器的精度影响很大。另外一类基于模板匹配的方法的精度受限与模板的数量，要获得较高的精度就需要大量的模板，而大量的模板会造成算法运行时间过长。
 
-工业上用于解决Bin-Picking问题的视觉系统也有许多，如图\ref{fig:bin-picking-sys}所示。日本的Fanuc公司推出了基于iRVision的Bin-Picking系统，该系统通过四个相机进行三维视觉重建，然后进行目标定位\cite{connolly2007new}。德国的ISRA Vision公司推出了3D Shape Scan系统，丹麦的Scape Technologies公司推出了Scape-Tech Discs系统，德国的Sick公司退出了PLB-500系统，诸如类似的Bin-Picking系统还有许多，这些Bin-Picking系统的价格大多二十万以上，并且抓取成功率和速度也往往难以满足客户需求，因此工业上还是缺少成熟的、价格便宜的、抓取成功率高、速度快的Bin-Picking解决方案。
+工业上用于解决Bin-Picking问题的视觉系统也有许多，如图\ref{fig:bin-picking-sys}所示。日本的Fanuc公司推出了基于iRVision的Bin-Picking系统，该系统通过四个相机进行三维视觉重建，然后进行目标定位\cite{connolly2007new}。德国的ISRA Vision公司推出了3D Shape Scan系统，丹麦的Scape Technologies公司推出了Scape-Tech Discs系统，德国的Sick公司推出了PLB-500系统，诸如类似的Bin-Picking系统还有许多，这些Bin-Picking系统的价格大多二十万以上，并且抓取成功率和速度也往往难以满足客户需求，因此工业上还是缺少成熟的、价格便宜的、抓取成功率高、速度快的Bin-Picking解决方案。
 \begin{figure}[ht]
   \centering
   \subfloat[Fanuc的iRVision系统]{\includegraphics[width=6cm]{fanuc}}
@@ -21,7 +21,7 @@
   \label{fig:bin-picking-sys}
 \end{figure}
 
-随着近几年一些高性价比的3D相机的出现，如微软的Kinect系列、Intel的RealSense系列，加上近几年深度学习的巨大发展，使得开发一种性价比高的、抓取成功率高的、速度快的Bin-Picking系统成为可能。但尽管深度学习在计算机视觉领域（Computer Vision）有了大量的研究，但在机器人感知（Robot Perception）领域的应用还比较少，因此本文将深度学习在计算机视觉领域内的成果通过一些改进引入到Robot Perception领域，再结合传统的全局点云匹配算法，提除了3D-MRAI算法，可以用于解决Bin-Picking相关问题。此外，本文基于Intel的RealSense SR300相机所提出的对偶RGB-D相机构建也为整个Bin-Picking系统提供了高性价比的相机解决方案。
+随着近几年一些高性价比的3D相机的出现，如微软的Kinect系列、Intel的RealSense系列，加上近几年深度学习的巨大发展，使得开发一种性价比高的、抓取成功率高的、速度快的Bin-Picking系统成为可能。但尽管深度学习在计算机视觉领域（Computer Vision）有了大量的研究，但在机器人感知（Robot Perception）领域的应用还比较少，因此本文将深度学习在计算机视觉领域内的成果通过一些改进引入到Robot Perception领域，再结合传统的全局点云匹配算法，提出了3D-MRAI算法，可以用于解决Bin-Picking相关问题。此外，本文基于Intel的RealSense SR300相机所提出的对偶RGB-D相机构建也为整个Bin-Picking系统提供了高性价比的3D相机解决方案。
 
 \section{基于3D-MRAI的随机分拣系统}
 \subsection{系统硬件设计}
@@ -53,16 +53,16 @@
 \end{figure}
 由于一般正常的随机分拣系统所要抓取的工件各种位姿都有，意味着所要抓取的工件有六个自由度，因此所选用的机器人末端至少也要有六个自由度，不然难以完成各种姿态工件的抓取任务，因此选用了工业上常见的六轴机械臂，至于为何选用NACHI的MZ04这个型号，是出于合作方的需要，并不由个人意志决定，当然何种机械臂也不是本文的重点，所设计的视觉算法对机械臂也没什么特殊的要求，因此此处不作详细介绍。
 
-实际搭建随机分拣系统环境如图\ref{fig:bin-picking-env}所示，图中相机固定在支架上，与机械臂构成了eye-to-hand的形式，当然也可以将相机固定在机械臂末端构成eye-in-hand形式，两种固定相机的形式略有不同，但对视觉识别算法那没有影响，只与控制流程和相机与机器人之间的标定有关系，后文会具体介绍到。嵌入式计算机通过相机采集物料箱内的图像，然后运行基于3D-MRAI的视觉系统，得出目标工件位姿，然后规划机械臂路径，通过TCP/IP通信，控制机械臂完成抓取任务，并根据机械臂的运动状态控制整个系统的流程。
+实际搭建随机分拣系统环境如图\ref{fig:bin-picking-env}所示，图中相机固定在支架上，与机械臂构成了eye-to-hand的形式，当然也可以将相机固定在机械臂末端构成eye-in-hand形式，两种固定相机的形式略有不同，但对视觉识别算法并没有影响，只与控制流程和相机与机器人之间的标定有关系，后文会具体介绍到。嵌入式计算机通过相机采集物料箱内的图像，然后运行基于3D-MRAI的视觉系统，得出目标工件位姿，然后规划机械臂路径，通过TCP/IP通信，控制机械臂完成抓取任务，并根据机械臂的运动状态控制整个系统的流程。
 \begin{figure}[ht]
   \centering
-  %@todo:bin picking env
   \includegraphics[width=10cm]{bin-picking-env}
   \caption{实际搭建随机分拣系统环境}
   \label{fig:bin-picking-env}
 \end{figure}
 
 \subsection{系统软件设计}
+\label{sec:hand_eye}
 {\kai 需求分析：}
 基于3D-MRAI的随机分拣系统的软件运行在所采用的嵌入式计算机上，主要需要以下几点功能：
 \begin{itemize}
@@ -177,7 +177,7 @@ Vision类的核心就是3D-MRAI算法，算法具体内容已经在第\ref{chap:
   }
   $H = Depth2HHA(D)$\;
   $Q = Depth2PointCloud(D)$\;
-  $Mask, Class \leftarrow 3DMASKRCNN(I, H)$\tcp*{Same with $3DFASTERRCNN$}
+  $Mask, Class \leftarrow DetectModule(I, H)$\;
   $Q_{sorted}\leftarrow \varnothing$\;
   \ForAll {$m_i\in Mask, c_i\in Class$} {
     $Q_i \leftarrow Crop(Q, m_i)$\;
@@ -186,7 +186,7 @@ Vision类的核心就是3D-MRAI算法，算法具体内容已经在第\ref{chap:
   $SORTBASEDONHEIGHT(Q_{sort})$\;
   \ForAll {$[Q_i, c_i]\in Q_{sort}$} {
     $P_i \leftarrow P(c_i)$\;
-    $T_i,S_i\leftarrow A4PCSICP(P_i, Q_i)$\;
+    $T_i,S_i\leftarrow MatchModule(P_i, Q_i)$\;
     \If {$S_i > S_{min}$} {
       \Return $\left[T_i, c_i\right]$\;
     }
@@ -200,7 +200,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 \item 多次变化机器人末端位姿，记录机器人末端位姿$\tensor*[^R_E]{\,\bm{H}}{}$以及标定板在相机坐标系下的位姿$\tensor*[^C_B]{\,\bm{H}}{}$；
 \item 根据多组$\tensor*[^R_E]{\,\bm{H}}{}$和$\tensor*[^C_B]{\,\bm{H}}{}$求解$\tensor*[^R_C]{\,\bm{H}}{}$；
 \end{itemize}
-根据多组机器人末端位姿和标定板位姿求解机器人基坐标系与相机坐标系之间的关系的原理等价与求解矩阵方程$\bm{A}\bm{X}=\bm{X}\bm{B}$。具体的，由于标定板固定在机器人末端执行器上，因此齐次变换矩阵$\tensor*[^B_E]{\,\bm{H}}{}$恒定，另外$\tensor*[^R_C]{\,\bm{H}}{}$也恒定，对于任意两组$\left\{\tensor*[^R_E]{\,\bm{H}}{_i},\tensor*[^C_B]{\,\bm{H}}{_i}\right\}$，$\left\{\tensor*[^R_E]{\,\bm{H}}{_j},\tensor*[^C_B]{\bm{H}}{_j}\right\}$存在等式
+根据多组机器人末端位姿和标定板位姿求解机器人基坐标系与相机坐标系之间的关系的原理等价与求解矩阵方程$\bm{A}\bm{X}=\bm{X}\bm{B}$。具体地，由于标定板固定在机器人末端执行器上，因此齐次变换矩阵$\tensor*[^B_E]{\,\bm{H}}{}$恒定，另外$\tensor*[^R_C]{\,\bm{H}}{}$也恒定，对于任意两组$\left\{\tensor*[^R_E]{\,\bm{H}}{_i},\tensor*[^C_B]{\,\bm{H}}{_i}\right\}$，$\left\{\tensor*[^R_E]{\,\bm{H}}{_j},\tensor*[^C_B]{\bm{H}}{_j}\right\}$存在等式
 \begin{equation}
   \label{eq:eye}
   \tensor*[^E_R]{\,\bm{H}}{_i} \, \tensor*[^R_C]{\,\bm{H}}{} \, \tensor*[^C_B]{\,\bm{H}}{_i} = \tensor*[^E_R]{\,\bm{H}}{_j} \, \tensor*[^R_C]{\,\bm{H}}{} \, \tensor*[^C_B]{\,\bm{H}}{_j}
@@ -235,7 +235,13 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 
 \section{随机分拣实验}
 \subsection{实验内容}
-设计的随机分拣实验在所搭建的工作台上进行，在物料箱中随机放慢物料，然后运行整个随机分拣系统，将物料中的全部工件分拣到另外一个箱子中，分拣完一箱后，再随机填充物料，一共统计十箱物料的抓取结果。
+设计的随机分拣实验在所搭建的工作台上进行，在物料箱中随机放满物料，如图\ref{fig:bin-picking-box}所示，然后运行整个随机分拣系统，将物料中的全部工件分拣到另外一个箱子中，分拣完一箱后，再随机填充物料，一共统计十箱物料的抓取结果。
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=8cm]{bin-picking-box}
+  \caption{装有物料的物料箱}
+  \label{fig:bin-picking-box}
+\end{figure}
 
 评价系统的指标主要是系统的抓取成功率：
 \begin{equation}
@@ -262,7 +268,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
   \centering
   \begin{tabular}{cccccc}
     \toprule
-    &成功率&响应时间$T_r$&抓取时间$T_1$&放置时间$T_2$&工作周期$T$ \\
+    &成功率R&响应时间$T_r$&抓取时间$T_1$&放置时间$T_2$&工作周期$T$ \\
     \midrule
     1&100\%&711ms&7.6s&4.2s&12.5s \\
     2&100\%&729ms&6.8s&4.2s&11.0s \\
@@ -273,7 +279,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
     7&100\%&693ms&7.9s&4.2s&12.1s \\
     8&100\%&732ms&9.1s&4.2s&13.3s \\
     9&100\%&718ms&8.9s&4.2s&13.1s \\
-    10&100\%&723ms&6.9s&4.2s&11.1s \\
+   10&100\%&723ms&6.9s&4.2s&11.1s \\
     \bf{Avg.}&\bf{100\%}&\bf{715ms}&\bf{7.77s}&\bf{4.20s}&\bf{12.04s} \\
     \bottomrule
   \end{tabular}
@@ -282,15 +288,155 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 \end{table}
 \begin{figure}[ht]
   \centering
-  \subfloat[抓取成功率]{\includegraphics[width=7cm]{app_r}}
-  \hskip0.5cm
-  \subfloat[响应时间]{\includegraphics[width=7cm]{app_tr}}
+  \subfloat[抓取成功率]{
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=6cm,
+        ylabel=R (\%),
+        xmin=1,xmax=10, xtick distance=1,
+        ymin=0, ymax=105,
+        clip=false
+        ]
+        \addplot[only marks, mark=*, blue] plot coordinates {
+          (1,100)
+          (2,100)
+          (3,100)
+          (4,100)
+          (5,100)
+          (6,100)
+          (7,100)
+          (8,100)
+          (9,100)
+          (10,100)
+        };
+        \addplot[red, dashed] plot coordinates {
+          (1,100)
+          (10,100)
+        };
+        \node[red,right] at (axis cs: 10,100) {\scriptsize{Avg}};
+      \end{axis}
+    \end{tikzpicture}
+  }
+  \hskip0.2cm
+  \subfloat[响应时间]{
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=6cm,
+        ylabel=$T_r$ (ms),
+        xmin=1,xmax=10, xtick distance=1,
+        ymin=0, ymax=900,
+        clip=false
+        ]
+        \addplot[only marks, mark=*, blue] plot coordinates {
+          (1,711)
+          (2,729)
+          (3,708)
+          (4,701)
+          (5,713)
+          (6,722)
+          (7,693)
+          (8,732)
+          (9,718)
+          (10,723)
+        };
+        \addplot[red, dashed] plot coordinates {
+          (1,715)
+          (10,715)
+        };
+        \node[red,right] at (axis cs: 10,715) {\scriptsize{Avg}};
+      \end{axis}
+    \end{tikzpicture}
+  }
   \vfill
-  \subfloat[抓取时间]{\includegraphics[width=7cm]{app_t1}}
-  \hskip0.5cm
-  \subfloat[放置时间]{\includegraphics[width=7cm]{app_t2}}
+  \subfloat[抓取时间]{
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=6cm,
+        ylabel=$T_1$ (s),
+        xmin=1,xmax=10, xtick distance=1,
+        ymin=0, ymax=10,
+        clip=false
+        ]
+        \addplot[only marks, mark=*, blue] plot coordinates {
+          (1,7.6)
+          (2,6.8)
+          (3,6.5)
+          (4,8.1)
+          (5,9.3)
+          (6,6.6)
+          (7,7.9)
+          (8,9.1)
+          (9,8.9)
+          (1,6.9)
+        };
+        \addplot[red, dashed] plot coordinates {
+          (1,7.77)
+          (10,7.77)
+        };
+        \node[red,right] at (axis cs: 10,7.77) {\scriptsize{Avg}};
+      \end{axis}
+    \end{tikzpicture}
+  }
+  \hskip0.2cm
+  \subfloat[放置时间]{
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=6cm,
+        ylabel=$T_2$ (s),
+        xmin=1,xmax=10, xtick distance=1,
+        ymin=0, ymax=10,
+        clip=false
+        ]
+        \addplot[only marks, mark=*, blue] plot coordinates {
+          (1,4.2)
+          (2,4.2)
+          (3,4.2)
+          (4,4.2)
+          (5,4.2)
+          (6,4.2)
+          (7,4.2)
+          (8,4.2)
+          (9,4.2)
+          (10,4.2)
+        };
+        \addplot[red, dashed] plot coordinates {
+          (1,4.2)
+          (10,4.2)
+        };
+        \node[red,right] at (axis cs: 10,4.2) {\scriptsize{Avg}};
+      \end{axis}
+    \end{tikzpicture}
+  }
   \vfill
-  \subfloat[工作周期]{\includegraphics[width=7cm]{app_t}}
+  \subfloat[工作周期]{
+    \begin{tikzpicture}
+      \begin{axis}[
+        width=6cm,
+        ylabel=$T$ (s),
+        xmin=1,xmax=10, xtick distance=1,
+        ymin=0, ymax=15,
+        clip=false
+        ]
+        \addplot[only marks, mark=*, blue] plot coordinates {
+          (1,12.5)
+          (2,11.0)
+          (3,10.7)
+          (4,12.3)
+          (5,13.5)
+          (6,10.8)
+          (7,12.1)
+          (8,13.3)
+          (9,13.1)
+          (10,11.1)
+        };
+        \addplot[red, dashed] plot coordinates {
+          (1,12.04)
+          (10,12.04)
+        };
+        \node[red,right] at (axis cs: 10,12.04) {\scriptsize{Avg}};
+      \end{axis}
+    \end{tikzpicture}
+  }
   \caption{随机分拣实验结果}
   \label{fig:app_res}
 \end{figure}

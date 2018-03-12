@@ -102,7 +102,7 @@ FUNCTION {punct.colon}
 }
 
 FUNCTION {punct.slash}
-{ "//\allowbreak{}"
+{ ". \allowbreak{}"
 }
 
 FUNCTION {punct.space}

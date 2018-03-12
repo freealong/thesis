@@ -1,6 +1,6 @@
 \chapter{RGB-D图像的获取与融合}
 \label{chap:rgbd}
-RGB-D图像是所设计的三维物体识别算法的输入，其质量对算法结果有着至关重要的影响，因此获取高质量的RGB-D图像也十分重要。本章首先分析了3D相机的现状，然后详细介绍了选取的RGB-D相机的原理和标定流程，并且针对其缺点提出了对偶RGB-D相机结构，最后通过实验证明了对偶RGB-D相机可以获取更高质量的RGB-D图像。
+RGB-D图像是所设计的3D目标检测和位姿估计算法的输入，其质量对算法结果有着至关重要的影响，因此获取高质量的RGB-D图像也十分重要。本章首先分析了3D相机的现状，然后详细介绍了选取的RGB-D相机的原理和标定流程，并且针对其缺点提出了对偶RGB-D相机结构，最后通过实验证明了对偶RGB-D相机可以获取更高质量的RGB-D图像。
 
 \section{3D相机现状与分析}
 3D相机能够获取相机到物体表面每一点的距离，从而感知物体的形状和距离，近几年3D成像技术的应用越来越多，如用于体感游戏的Kinect\cite{kinect}，Google的Project Tango\cite{tango}，以及Apple公司的iPhone X前置摄像头的人脸识别。
@@ -32,7 +32,7 @@ RGB-D图像是所设计的三维物体识别算法的输入，其质量对算法
   \caption{市面上主要3D相机}
   \label{fig:3d_camera}
 \end{figure}
-如表\ref{tab:3d_camera}和图\ref{fig:3d_camera}所示，列举了一些市面上较为常见的3D相机，从表中可以发现很多精度高的3D相机价格及其昂贵，并且采集速度很慢，价格低的3D相机精度也相对较低。出于实际应用考虑，我们需要相机的采集速度相对较快，再加上成本上的限制，最终选择了精度中等、采集速度较快、价格较为便宜的Realsense系列相机。
+如表\ref{tab:3d_camera}和图\ref{fig:3d_camera}所示，列举了一些市面上较为常见的3D相机，从表中可以发现很多精度高的3D相机价格极其昂贵，并且采集速度很慢，价格低的3D相机精度也相对较低。出于实际应用考虑，我们需要相机的采集速度相对较快，再加上成本上的限制，最终选择了精度中等、采集速度较快、价格较为便宜的Realsense系列相机。
 
 
 \section{RGB-D相机}
@@ -49,14 +49,13 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 
 三种原理的深度相机各有其特点，采用Structure Light原理的深度相机一般精度比较高，但景深比较短并且受光线影响比较大，适合室内场景；ToF原理的深度相机获取深度图的精度和分辨率一般都比较低，但帧率高，并且具有一定的抗光照性能；Stereo获取深度精度适中，帧率相对来说较低，并且需要较强的计算性能，但抗光照能力强，适合室外场景。
 
-本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=12cm]{sr300}
   \caption{Realsense SR300内部结构图}
   \label{fig:sr300}
 \end{figure}
-从图\ref{fig:sr300}可以看出，SR300内部的传感器主要有彩色摄像头（Color Camera）、红外激光发射器（Infrared Laser Projector）和红外摄像头（Infrared Camera）。Color Camera是1920×1080像素的普通针孔摄像头，用来获取彩色图像；Infrared Laser Projector和Infrared Camera用来获取深度图像或者红外成像图，两种成像流程如图\ref{fig:capture_flow}所示。
+本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。从图\ref{fig:sr300}可以看出，SR300内部的传感器主要有彩色摄像头（Color Camera）、红外激光发射器（Infrared Laser Projector）和红外摄像头（Infrared Camera）。Color Camera是1920×1080像素的普通针孔摄像头，用来获取彩色图像；Infrared Laser Projector和Infrared Camera用来获取深度图像或者红外成像图，两种成像流程如图\ref{fig:capture_flow}所示。
 \begin{figure}[!ht]
   \centering
   \subfloat[Depth Video Data Flow]{\includegraphics[width=12cm]{depth_flow}}
@@ -185,12 +184,12 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 \label{sec:rgb-d_calibration}
 根据上文所述的RGB-D相机的结构及数学模型，RGB-D相机的标定主要涉及到彩色摄像头内参和畸变的标定，深度摄像头内参和畸变的标定，以及彩色摄像头和深度摄像头之间位姿变换的标定。由于RGB-D相机是一种较为新颖的相机，所以市面上基本上没有较为成熟通用的标定RGB-D相机的方法以及对应的工具。因此本文针对所使用的Realsense SR300相机，设计了一套标定方法。
 
-根据公式\ref{eq:rgbd_cam_model}可知相机需要标定的参数有彩色相机内参和畸变参数9个，深度相机内参和畸变参数9个，彩色相机和深度相机之间的位姿关系6个，一共24个参数。一起标定这24个参数理论上是相当困难的，考虑到普通针孔相机的标定技术已经相当成熟（如张正友的棋盘格标定\cite{Zhang2002}，以及RGB-D相机中彩色相机和深度相机的解耦性，因此所设计的标定方法分为三步：
-\begin{enumerate}[Step 1]
-\item 标定彩色相机内参以及畸变参数
-\item 标定深度相机内参以及畸变参数
-\item 标定彩色相机和深度相机之间的齐次变换关系
-\end{enumerate}
+根据公式\ref{eq:rgbd_cam_model}可知相机需要标定的参数有彩色相机内参和畸变参数9个，深度相机内参和畸变参数9个，彩色相机和深度相机之间的位姿关系6个，一共24个参数。一起标定这24个参数理论上是相当困难的，考虑到普通针孔相机的标定技术已经相当成熟（如张正友的棋盘格标定\cite{Zhang2002}），以及RGB-D相机中彩色相机和深度相机的解耦性，因此所设计的标定方法分为三步：
+\begin{itemize}
+\item \emph{step 1}：标定彩色相机内参以及畸变参数
+\item \emph{step 2}：标定深度相机内参以及畸变参数
+\item \emph{step 3}：标定彩色相机和深度相机之间的齐次变换关系
+\end{itemize}
 
 步骤1标定彩色相机内参以及畸变参数相对来说比较简单，主要参考文献\cite{Zhang2002}，但所使用的标定板是不对称圆盘标定板（Asymmetrical Circle Board），如图\ref{fig:circle_board}是$4\times 11$的不对称圆盘标定板。
 \begin{figure}[!ht]
@@ -428,11 +427,11 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 
 \subsection{对偶RGB-D相机的标定流程}
 对偶RGB-D相机的标定流程可以分为三步：
-\begin{enumerate}[Step 1]
-\item 分别标定好单个RGB-D相机
-\item 标定出两个彩色相机之间的齐次变换关系
-\item 标定出矫正彩色图像的旋转矩阵以及矫正后图像的投影矩阵
-\end{enumerate}
+\begin{itemize}
+\item \emph{step 1}：分别标定好单个RGB-D相机
+\item \emph{step 2}：标定出两个彩色相机之间的齐次变换关系
+\item \emph{step 3}：标定出矫正彩色图像的旋转矩阵以及矫正后图像的投影矩阵
+\end{itemize}
 单个RGB-D相机的标定在\ref{sec:rgb-d_calibration}小节中已经详细叙述过了，分别标定完单个RGB-D相机后，后面的步骤其实就等价于双目标定了。双目的几何结构如图\ref{fig:stereo}所示，
 \begin{figure}[!ht]
   \centering
@@ -495,18 +494,19 @@ RGB-D相机相对于彩色图我们更关心其深度图的质量，因此设计
 实验流程示意图如图\ref{fig:depth_exp_steps}所示，
 \begin{figure}[ht]
   \centering
-  \includegraphics[]{depth_exp_steps}
+  \includegraphics[width=12cm]{depth_exp_steps}
   \caption{实验流程图}
   \label{fig:depth_exp_steps}
 \end{figure}
 其中$z_c$是相机坐标系的$z$轴方向，$z_r$是机械臂末端运动方向，也是平板运动方向，$z_b$是垂直于平板的方向，$D_i:=\{d_1,d_2,…,d_{n_i}\}$是相机采集到平板的深度信息。具体实验步骤如下：
 \begin{itemize}
-\item 固定机械臂和相机，通过手眼标定(具体见\ref{sec:hand_eye}小节）得到相机坐标系和机器人坐标系之间的齐次变换关系
+\item 固定机械臂和相机，标定好相机，然后通过手眼标定(具体见\ref{sec:hand_eye}小节）得到相机坐标系和机器人坐标系之间的齐次变换关系
 \item 固定平板到机械臂末端
 \item 通过相机采集平板的深度信息$D_0$，记录此时示教器上机械臂末端在机器人坐标系$z$轴上的值$r_0$
 \item 控制机械臂示教器使机械臂末端沿机器人坐标系$z$轴运动，分别记录此时平板的深度信息$D_i$和机械臂末端位置在$z$方向上的值$r_i$
 \item 重复上述步骤，直到采集满$n$组数据
 \end{itemize}
+上述步骤中标定用到的代码见本人Github项目地址\footnote{\url{https://github.com/freealong/RoboCamCal}}，代码包括了普通针孔相机的标定、双目相机的标定、以及手眼标定。
 
 \subsection{实验原理}
 通过上述实验步骤采集完数据后，需要计算深度信息的填充率、精度和噪声这三个指标，下面分别介绍这三个指标的定义和计算方式。
@@ -523,7 +523,7 @@ RGB-D相机相对于彩色图我们更关心其深度图的质量，因此设计
 其中$\hat{d_i}$表示相机坐标系原点到拟合平面的距离，$d_i$表示相机坐标系原点到实际平板的距离，详细如图\ref{fig:depth_exp_precision}所示。
 \begin{figure}
   \centering
-  \includegraphics[width=10cm]{depth_exp_precision}
+  \includegraphics[width=12cm]{depth_exp_precision}
   \caption{精度测量原理图}
   \label{fig:depth_exp_precision}
 \end{figure}
@@ -544,7 +544,7 @@ $\hat{d}_i$的计算相对简单，根据$D_i$中拟合出相机坐标系下平�
 其中$\delta_j$为点到拟合平面的距离。
 
 \subsection{实验结果}
-实验分别对SR300和对偶RGB-D相机在平板距离相机0.2到1.2m范围内采集了$1 + 10$组数据，测得每组数据深度信息的三个指标，填充率随距离变换的曲线如图\ref{fig:fillrate_exp_res}所示。
+实验分别对SR300和对偶RGB-D相机在平板距离相机0.2到1.2m范围内采集了$1 + 10$组数据，测得每组数据深度信息的三个指标，填充率随距离变换的曲线如图\ref{fig:fillrate}所示。
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}
@@ -633,13 +633,13 @@ $\hat{d}_i$的计算相对简单，根据$D_i$中拟合出相机坐标系下平�
         (0.3, 0.12)
         (0.4, 0.15)
         (0.5, 0.27)
-        (0.6, 0.4)
-        (0.7, 0.51)
-        (0.8, 0.62)
-        (0.9, 0.75)
-        (1.0, 0.9)
-        (1.1, 1.2)
-        (1.2, 1.9)
+        (0.6, 0.35)
+        (0.7, 0.46)
+        (0.8, 0.53)
+        (0.9, 0.66)
+        (1.0, 0.79)
+        (1.1, 1.08)
+        (1.2, 1.3)
       };
       \addlegendentry{Dual RGB-D}
       \addplot[smooth, mark=x, red] plot coordinates {

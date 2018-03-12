@@ -7,6 +7,11 @@ would like to use here]
 \RequirePackage{mathtools}
 \RequirePackage{tikz}
 \RequirePackage{pgfplots}
+\pgfplotsset{every tick label/.append style={font=\tiny}}
+\pgfplotsset{every x tick label/.append style={font=\tiny, yshift=0.5ex}}
+\pgfplotsset{every y tick label/.append style={font=\tiny, xshift=0.5ex}}
+\pgfplotsset{ylabel/.append style={font=\small, xshift=2.0ex}}
+\pgfplotsset{xlabel/.append style={font=\small, yshift=2.0ex}}
 
 % 不同于~|\mathcal| or |\mathfrak| 之类的英文花体字体
 %\RequirePackage{mathrsfs}

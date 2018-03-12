@@ -5,7 +5,7 @@
 \section{3D-MRAI框架设计}
 本文设计的3D-MRAI算法主要解决三维空间中的目标检测和位姿估计问题，根据输入的RGB-D图像，输出图像中的目标和其在三维空间中的位姿，区别于常见的2D目标检测算法（2D目标检测算法往往只给出目标的种类和其在图像坐标中的Bounding box或者Mask）。给出目标在三维空间中的位姿的意义十分巨大，尤其在机器人领域中，图像层面的结果往往难以满足要求，但同时算法的难度也很大。
 
-一些给出3D目标位姿的传统算法，如3DMatch\cite{zeng20163dmatch}，3DMatch通过匹配局部几何特征来计算目标的位姿，缺点是对采集的3d数据质量要求很高，往往需要使用激光采集，因此整个识别过程的时间很久；通过SIFT描述子来匹配目标位姿\cite{dias2015sift}也是一种方法，但其对纹理较少的物体往往难以匹配，效果很差；另外如LINEMOD\cite{hinterstoisser2012gradient}和MOPED\cite{collet2011moped}这些位姿估计框架，在某些情况下如目标在平整的桌面上并且光照条件较好的情况下才能取得满意的效果。因此，传统的一些3D目标位姿估计算法往往难以在实际中具体应用，为此，本文设计一种鲁棒性和准确率都较高的3D目标检测和位姿估计算法3D-MRAI。
+一些给出3D目标位姿的传统算法，如3DMatch\cite{zeng20163dmatch}，3DMatch通过匹配局部几何特征来计算目标的位姿，缺点是对采集的3D数据质量要求很高，往往需要使用激光采集，因此整个识别过程的时间很久；通过SIFT描述子来匹配目标位姿\cite{dias2015sift}也是一种方法，但其对纹理较少的物体往往难以匹配，效果很差；另外如LINEMOD\cite{hinterstoisser2012gradient}和MOPED\cite{collet2011moped}这些位姿估计框架，在某些情况下如目标在平整的桌面上并且光照条件较好的情况下才能取得满意的效果。因此，传统的一些3D目标位姿估计算法往往难以在实际中具体应用，为此，本文设计一种鲁棒性和准确率都较高的3D目标检测和位姿估计算法3D-MRAI。
 
 所设计的3D-MRAI算法的框架如图\ref{fig:detect-pose}所示，
 \begin{figure}[ht]
@@ -23,46 +23,44 @@
 \section{检测模块}
 \label{sec:detector}
 \subsection{模块框架设计}
-本文所设计的检测模块有两种：一种基于Faster R-CNN，另外一种基于Mask R-CNN。两种模块的输出不同，基于Faster R-CNN的检测模块在RGB-D图中输出的是目标的Class和BBox；基于Mask R-CNN的检测模块输出的是目标的Class、BBox和Mask。从模块输出来看，基于Faster R-CNN的检测模块是基于Mask R-CNN的检测模块的子集。在设计之初，基于Faster R-CNN的检测模块先被设计出来，由于基于Faster R-CNN的检测模块的输出只有Class和BBox，对于普通物体通过BBox分割目标点云再输入到匹配模块进行匹配并没有什么问题，但是，当所要检测的物体是细长类型的，如图\ref{fig:bbox-segment}所示BBox内的大部分像素都不是目标物体，此时通过该BBox分割得到的目标点云也包含了许多不属于该目标的点，这样的点云输入到匹配模块很难进行正确的匹配。
+本文所设计的检测模块有两种：一种基于Faster R-CNN，另外一种基于Mask R-CNN。两种模块的输出不同，基于Faster R-CNN的检测模块在RGB-D图中输出的是目标的Class和BBox；基于Mask R-CNN的检测模块输出的是目标的Class、BBox和Mask。从模块输出来看，基于Faster R-CNN的检测模块是基于Mask R-CNN的检测模块的子集。在设计之初，基于Faster R-CNN的检测模块先被设计出来，由于基于Faster R-CNN的检测模块的输出只有Class和BBox，对于普通物体通过BBox分割目标点云再输入到匹配模块进行匹配并没有什么问题，但是，当所要检测的物体是细长类型的，在某些位姿下，如图\ref{fig:bbox-segment}所示BBox内的大部分像素都不是目标物体，此时通过该BBox分割得到的目标点云也包含了许多不属于该目标的点，这样的点云输入到匹配模块很难进行正确的匹配。
 \begin{figure}[ht]
   \centering
   \subfloat[检测模块输出的BBox示意图]{
-    % \includegraphics[width]{bbox-segment}
-    todo
+    \includegraphics[width=6cm]{bbox-segment}
   }
   \hskip1cm
   \subfloat[根据BBox分割得到的点云]{
-    % \includegraphics[width]{bbox-segment-cloud}
+    \includegraphics[width=6cm]{bbox-segment-cloud}
   }
   \caption{由BBox分割点云效果图}
   \label{fig:bbox-segment}
 \end{figure}
 
-为了解决这一个问题，本文参考Mask R-CNN对Faster R-CNN的改进，设计了基于Mask R-CNN的检测模块，通过Mask R-CNN检测输出的Mask分割点云，有效的解决了利用BBox分割细长物体时造成目标点云包含过多不属于目标的点的问题，如图\ref{fig:mask-segment}所示。但是，基于Faster R-CNN的检测模块也有其存在的必要，因为基于Mask R-CNN的检测模块的运算时间要大于基于Faster R-CNN的检测模块，所以，如果考虑算法的时间性能，对于细长物体建议使用基于Mask R-CNN的检测模块，除此之外使用基于Faster R-CNN的检测模块。
 \begin{figure}[ht]
   \centering
   \subfloat[检测模块输出的Mask示意图]{
-    % \includegraphics[width]{bbox-segment}
-    todo
+    \includegraphics[width=6cm]{mask-segment}
   }
   \hskip1cm
   \subfloat[根据Mask分割得到的点云]{
-    % \includegraphics[width]{bbox-segment-cloud}
+    \includegraphics[width=6cm]{mask-segment-cloud}
   }
   \caption{由Mask分割点云效果图}
-  \label{fig:bbox-segment}
+  \label{fig:mask-segment}
 \end{figure}
+为了解决这一个问题，本文参考Mask R-CNN对Faster R-CNN的改进，设计了基于Mask R-CNN的检测模块，通过Mask R-CNN检测输出的Mask分割点云，有效的解决了利用BBox分割细长物体时造成目标点云包含过多不属于目标的点的问题，如图\ref{fig:mask-segment}所示。但是，基于Faster R-CNN的检测模块也有其存在的必要，因为基于Mask R-CNN的检测模块的运算时间要大于基于Faster R-CNN的检测模块，所以，如果考虑算法的时间性能，对于细长物体建议使用基于Mask R-CNN的检测模块，除此之外使用基于Faster R-CNN的检测模块。
 
 基于Faster R-CNN的检测模块的框架如图\ref{fig:3d_faster_rcnn}所示，基于Mask R-CNN的检测模块的框架如图\ref{fig:3d_mask_rcnn}所示。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=10cm]{3dfasterrcnn}
+  \includegraphics[width=8cm]{faster_rcnn_module}
   \caption{基于Faster R-CNN的检测模块}
   \label{fig:3d_faster_rcnn}
 \end{figure}
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=10cm]{3dmaskrcnn}
+  \includegraphics[width=10cm]{mask_rcnn_module}
   \caption{基于Mask R-CNN的检测模块}
   \label{fig:3d_mask_rcnn}
 \end{figure}
@@ -72,7 +70,7 @@
 Mask R-CNN是一个2D目标检测的深度神经网络，其网络结构如图\ref{fig:mask_rcnn}所示。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=10cm]{maskrcnn}
+  \includegraphics[width=10cm]{mask_rcnn}
   \caption{Mask R-CNN网络结构}
   \label{fig:mask_rcnn}
 \end{figure}
@@ -178,8 +176,14 @@ Data Augmentation是通过对训练集中的图片进行旋转以获取不同角
 Spatial Transformer Network是一个可微模块，根据输入的特征对其进行相应的空间变化，输出变换后的特征，如图\ref{fig:spatial_transformer_results}所示，
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=6cm]{stn_results}
-  \caption{Spatial Transformer效果图}
+  \subfloat{
+    \includegraphics[width=6cm]{stn_results}
+  }
+  \hskip0.5cm
+  \subfloat{
+    \includegraphics[width=6cm]{grid-generator}
+  }
+  \caption{Spatial Transformer Network效果图}
   \label{fig:spatial_transformer_results}
 \end{figure}
 输入特征$U$经过Spatial Transformer Network模块后输出特征$V$。Spatial Transformer Network模块具体可以分为三个部分，如图\ref{fig:spatial_transformer}。
@@ -224,7 +228,7 @@ Spatial Transformer Network是一个可微模块，根据输入的特征对其�
     \end{array}
   \right)
 \end{equation}
-其中$(x_i^s, y_i^s)$是输入特征中点的坐标，也是图\ref{fig:spatial_transfomer_result}中的绿色点。
+其中$(x_i^s, y_i^s)$是输入特征中点的坐标，也是图\ref{fig:spatial_transformer_results}中的绿色点。
 
 采样器输入网格生成器生成的点集$\mathcal{T}_\theta$，和输入特征$U$，最终输出经过空间变换后的特征$V$，具体如公式\ref{eq:sampler}所示：
 \begin{equation}
@@ -260,12 +264,12 @@ Spatial Transformer Network是一个可微模块，根据输入的特征对其�
     \right.
 \end{equation}
 
-具体地，对于Mask R-CNN本文将STN模块加在了Mask R-CNN的ROIAlign层之后，如图\ref{fig:mask_rcnn}所示。通过在ROIAlign层后增加STN模块，使得提取的特征经过STN模块后具有一定的旋转不变形。
+具体地，对于Mask R-CNN本文将STN模块加在了Mask R-CNN的ROIAlign层之后，如图\ref{fig:mask_rcnn}所示。通过在ROIAlign层后增加STN模块，使得提取的特征经过STN模块后具有一定的旋转不变性。
 
 \subsection{检测模块实验}
 为了评价所设计的基于Faster R-CNN和Mask R-CNN的检测模块的性能，本文分别在一个现有的数据集和一个自己采集的实际应用的数据集上进行了网络的训练和测试，并与原始的Faster R-CNN和Mask R-CNN网络相比较，验证了所设计的检测模块的性能。
 
-{\kai 数据集}：实验所采用的数据集一个是参加APC(Amazon Picking Challenge)的MIT-Princeton队伍所采集的数据集"Shelf \& Tote" Benchmark Dataset\cite{apcdataset}，此处简单记为APC数据集，另外一个数据集是实际用于bin-picking在实验室采集的数据集，记为workpiece数据集。
+{\kai 数据集}：实验所采用的数据集一个是参加APC(Amazon Picking Challenge)的MIT-Princeton队伍所采集的数据集"Shelf \& Tote" Benchmark Dataset\cite{apcdataset}，此处简单记为APC数据集，另外一个数据集是实际用于Bin-Picking在实验室采集的数据集，记为workpiece数据集。
 
 对于APC数据集，该数据集共有39类不同的物体，452个场景，每个场景有不同的物体，一共7281组图片，通过在多个场景下，不同的视角下使用Intel Realsense SR300相机所拍摄。标注的数据是每个场景下物体在世界坐标系下的位姿，以及每个场景下相机在世界坐标系下的位姿，是一个半自动标注的数据集，通过物体的位姿和相机的位姿就可以得到每个物体在相机坐标系下的位姿，数据集中部分数据如图\ref{fig:apc_dataset}所示。
 \begin{figure}[ht]
@@ -289,24 +293,24 @@ Spatial Transformer Network是一个可微模块，根据输入的特征对其�
   \label{fig:apc_dataset}
 \end{figure}
 
-APC数据集中标注的标签可以认为是每个物体在相机坐标系下的位姿和类别，对于设计的算法来说需要的是物体的类别（class）、边界框（bounding box)和掩模（mask），因此需要对原始标注数据进行一些处理，因为APC还提供了每类物体的CAD模型，并且相机的内参矩阵也在数据集中提供了，因此可以将CAD模型转换为点云后齐次变换到所标注的对应物体在相机坐标系下的位姿，然后利用相机内参矩阵将物体点云投影到图像平面，从而获得物体的mask，进而可以得到物体的bounding box。需要注意的是由于一个场景中有多个物体，在不同相机位姿下会出现遮挡，因此需要对被遮挡物体的mask进行相应的裁剪，对于几乎被完全遮挡的物体可以去除，判断物体是否遮挡可以通过物体点云距离相机原点的距离远近判断。将一张图中物体位姿得到mask和boudning box的处理流程如下所示：
+APC数据集中标注的标签可以认为是每个物体在相机坐标系下的位姿和类别，对于设计的算法来说需要的是物体的类别（Class）、边界框（Bounding Box)和掩模（Mask），因此需要对原始标注数据进行一些处理，因为APC还提供了每类物体的CAD模型，并且相机的内参矩阵也在数据集中提供了，因此可以将CAD模型转换为点云后齐次变换到所标注的对应物体在相机坐标系下的位姿，然后利用相机内参矩阵将物体点云投影到图像平面，从而获得物体的Mask，进而可以得到物体的Bounding Box。需要注意的是由于一个场景中有多个物体，在不同相机位姿下会出现遮挡，因此需要对被遮挡物体的Mask进行相应的裁剪，对于几乎被完全遮挡的物体可以去除掉，判断物体是否遮挡可以通过物体点云距离相机原点的距离远近判断。将一张图中物体位姿得到Mask和Boudning Box的处理流程如下所示：
 \begin{enumerate}
 \item 对于图中标注的每个物体：
   \begin{itemize}
   \item 将对应物体的3D点云变换到物体标注的位姿
-  \item 根据相机内参矩阵将3D点云投影到图像平面，获得物体的mask以及mask对应的深度图depth
+  \item 根据相机内参矩阵将3D点云投影到图像平面，获得物体的Mask以及Mask对应的深度图Depth
   \end{itemize}
 \item 遍历像素索引i：
   \begin{itemize}
-  \item 如果在索引i出存在多张mask的值有效，保留depth值最小的mask，将其余mask在索引i处置为无效
+  \item 如果在索引i出存在多张Mask的值有效，保留Depth值最小的Mask，将其余Mask在索引i处置为无效
   \end{itemize}
-\item 对于每个物体的mask：
+\item 对于每个物体的Mask：
   \begin{itemize}
-  \item 如果mask中有效像素点小于阈值$T$，删除该mask
-  \item 根据mask有效像素点的坐标计算对应的bounding box
+  \item 如果Mask中有效像素点小于阈值$T$，删除该Mask
+  \item 根据mask有效像素点的坐标计算对应的Bounding Box
   \end{itemize}
 \end{enumerate}
-处理后的部分图片的ground truth（class，mask，boudning box）如图\ref{fig:apc_gt}所示。
+处理后的部分图片的ground truth（Class，Mask，Boudning Box）如图\ref{fig:apc_gt}所示。
 \begin{figure}[ht]
   \centering
   \subfloat{\includegraphics[width=6cm]{apc_gt1}}
@@ -319,14 +323,14 @@ APC数据集中标注的标签可以认为是每个物体在相机坐标系下�
   \caption{APC数据集部分标注数据}
   \label{fig:apc_gt}
 \end{figure}
-从图\ref{fig:apc_gt}可以看出处理后的mask基本覆盖了物体，boudning box也正确框出了物体，唯一的缺点是所生成的mask有时候有些缺失，没有人工标注的完美，如图\ref{fig:apc_gt}中第一张图中的瓶子（easter turtle sippy cup）标注的mask有很多缺失，根本原因是所使用的物体的CAD模型是通过相机采集生成的，其转换的3D点云质量并不是十分理想，其3D点云比较稀疏并且有部分缺失，如图\ref{fig:apc_model}所示，这个瓶子的点云有严重的缺失，主要原因是瓶子透明，所以相机难以采集其深度信息。
+从图\ref{fig:apc_gt}可以看出处理后的Mask基本覆盖了物体，Boudning Box也正确框出了物体，唯一的缺点是所生成的Mask有时候有些缺失，没有人工标注的完美，如图\ref{fig:apc_gt}中第一张图中的瓶子（easter turtle sippy cup）标注的Mask有很多缺失，根本原因是所使用的物体的CAD模型是通过相机采集生成的，其转换的3D点云质量并不是十分理想，其3D点云比较稀疏并且有部分缺失，如图\ref{fig:apc_model}所示，这个瓶子的点云有严重的缺失，主要原因是瓶子透明，所以相机难以采集其深度信息。
 \begin{figure}[ht]
   \centering
   \includegraphics[width=10cm]{apc_model1}
   \caption{easter turtle sippy cup point cloud}
   \label{fig:apc_model}
 \end{figure}
-模型点云的缺失，因此将点云投影到图像平面生成的mask也有部分缺失，尽管已经对生成的mask进行了一些滤波处理，但部分mask还是有明显的缺失。
+模型点云的缺失，因此将点云投影到图像平面生成的mask也有部分缺失，尽管已经对生成的mask进行了一些滤波处理，但部分Mask还是有明显的缺失。
 
 总体来说，尽管生成的ground truth的质量没有人工标注的ground truth质量好，但对本实验来说已经够用，并且相比人工标注这种半自动化的标注方式节省了大量时间和金钱成本。
 
@@ -347,18 +351,18 @@ workpiece数据集有三类物体，共2k组图片。该数据集与APC数据集
   \caption{workpiece数据集部分图片}
   \label{fig:wp_dataset}
 \end{figure}
-workpiece数据集的ground truth由人工标定，其中据测试集中有的ground truth不仅包括了物体的class，mask，bounding box，还有物体的位姿，并且由于三类物体都是工厂中的工件，因此也提供三类物体精确的CAD模型。
+workpiece数据集的ground truth由人工标定，其中据测试集中有的ground truth不仅包括了物体的Class，Mask，Bounding box，还有物体的位姿，并且由于三类物体都是工厂中的工件，因此也提供三类物体精确的CAD模型。
 
 {\kai 算法实现}主要通过Tensorflow框架使用python语言实现，详细代码见Github项目地址\footnote{\url{https://github.com/freealong/Mask\_RCNN}}。
 
-{\kai 评价的指标}主要是检测的精确度AP以及算法的时间性能FPS。FPS是每秒能检测的图片数比较好理解，AP是BBox或者Mask交并比的精确度。具体地，如图\ref{fig:iou}所示，
+{\kai 评价的指标}主要是检测的精确度AP（Average Precision）以及算法的时间性能FPS。FPS是每秒能检测的图片数比较好理解，AP是BBox或者Mask交并比的精确度。具体地，如图\ref{fig:iou}所示，
 \begin{figure}[ht]
   \centering
   \includegraphics[width=8cm]{iou}
   \caption{bounding box交并比}
   \label{fig:iou}
 \end{figure}
-两个bounding box的交并比定义为：
+两个BBox的交并比定义为：
 \begin{equation}
   IoU = \frac{S_1\cap S_2}{S_1\cup S_2}
 \end{equation}
@@ -371,7 +375,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 {\kai 模型训练}在实验室的服务器上进行，服务器有两块Intel(R) Xeon(R) E5-2683 v3(2.00GHz)的CPU，4块TITAN X GPU。模型训练时为了减少训练时间，4块GPU都使用了。在APC数据集上，训练用了约6k组图片，剩下的1k多组图片用于测试，基于Faster R-CNN的检测模块训练用了40个小时左右，基于Mask R-CNN的检测模块用了48个小时左右；在workpiece数据集上，训练用了约1.6k组图片，剩下的400组图片用于测试，基于Faster R-CNN的检测模块训练用了30个小时左右，基于Mask R-CNN的检测模块用了36小时左右。
 
 {\kai 实验结果}：
-在APC数据集上，本文的检测模块与原始的Faster R-CNN和Mask R-CNN的精确度如表\ref{tab:ap1}所示，在测试集上的部分图片检测结果见图\ref{fig:ap_res}。
+在APC数据集上，本文的检测模块与原始的Faster R-CNN和Mask R-CNN的精确度如表\ref{tab:ap1}所示，在测试集上的部分图片检测结果见图\ref{fig:apc_res}。
 \begin{table}[ht]
   \centering
   \caption{APC数据集上的精确度}
@@ -462,9 +466,9 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 
 其中一个比较流行的算法是通过使用稳定的局部几何描述子来匹配得到粗略的刚体变换，然后紧接着使用ICP算法\cite{besl1992method}迭代获取较为精确的刚体变换\cite{li2005multiscale}。这种算法的效果十分取决于所选取的描述子，通常一般的描述子对传感器噪声都比较敏感，尤其是一些低精度的传感器，常用的局部几何特征描述子有SHOT\cite{salti2014shot}、FFPH\cite{rusu2009fast}等；还有一种比较流行的方法是通过几何希哈方法从事先设置好的候选集中来选择合适的刚体变换\cite{wolfson1997geometric}；一些随机算法，如RANSAC（Random Sample Consesue）\cite{bolles1981ransac}通常需要足够长的时间才能保证得到合适的解。
 
-上述介绍的一些算法，有些对噪声的鲁棒性不强，有些时间复杂度极高，有些也难以处理部分重叠的情况，即点集$P$和$Q$之间只有一部分点集是相匹配的，因此难以实际直接应用到本文所需要解决的问题，其效果也难以让人满意。对此，本文基于4PCS（4-Points Congruent Sets）算法设计了有效解决点云匹配的匹配模块。
+上述介绍的一些算法，有些对噪声的鲁棒性不强，有些时间复杂度极高，有些也难以处理部分重叠的情况，即点集$P$和$Q$之间只有一部分点集是相匹配的，因此难以实际直接应用到本文所需要解决的问题，其效果也难以让人满意。对此，本文基于4PCS（4-Points Congruent Sets）\cite{aiger20084}算法设计了有效解决点云匹配的匹配模块。
 
-所设计的匹配模块首先针对4PCS算法的不足，对其进行改进，然后通过对离群点进行过滤和利用ICP算法进行迭代提升最终匹配的精度。从图\ref{fig:4pcs-pe}中可以看出所设计的匹配模块主要由三个部分组成：改进的4PCS算法、Outlier filter和ICP算法。改进的4PCS算法根据输入的两个点云输出两个点集之间的粗略的变换关系；Outlier filter根据改进的4PCS算法的输出对点集$P'$和$Q'$进行滤波，去掉一些离群点，用以提高下一步ICP算法的精度；ICP模块通过以改进后的4PCS算法输出的变换关系为初始值对滤波后的两个点集进行迭代求解最佳的刚体变换关系，输出最终的变换关系$T$和匹配的分数$S$，$T$也是目标的位姿，$S$是点云匹配误差的倒数，\ref{sec:matcher_exp}小节会具体介绍匹配误差。
+所设计的匹配模块首先针对4PCS算法的不足，对其进行改进，然后通过对离群点进行过滤和利用ICP算法进行迭代提升最终匹配的精度。从图\ref{fig:4pcs-pe}中可以看出所设计的匹配模块主要由三个部分组成：改进的4PCS算法（Angle-fixed 4PCS）、Outlier filter和ICP算法。改进的4PCS算法根据输入的两个点云输出两个点集之间的粗略的变换关系；Outlier filter根据改进的4PCS算法的输出对点集$P'$和$Q'$进行滤波，去掉一些离群点，用以提高下一步ICP算法的精度；ICP模块通过以改进后的4PCS算法输出的变换关系为初始值对滤波后的两个点集进行迭代求解最佳的刚体变换关系，输出最终的变换关系$T$和匹配的分数$S$，$T$也是目标的位姿，$S$是点云匹配误差的倒数，\ref{sec:matcher_exp}小节会具体介绍匹配误差。
 
 \subsection{4PCS算法的改进}
 介绍改进的4PCS算法之前，首先必须详细介绍一下4PCS算法。4PCS算法是用于求解LCP（Largest Common Pointset）问题的一个算法，LCP问题的定义如下：
@@ -632,13 +636,12 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 \begin{figure}[ht]
   \centering
   \subfloat[目标3D模型转化的点云]{
-    % includegraphics[width=6cm]{}
+    \includegraphics[width=6cm]{object-cloud}
   }
   \hskip1cm
   \subfloat[由BBox分割得到的点云]{
-    % includegraphics[width=6cm]{}
+    \includegraphics[width=6cm]{target-cloud}
   }
-  todo: 实际要匹配的点云
   \caption{实际要匹配的两个点云}
   \label{fig:outlier-pointcloud}
 \end{figure}
@@ -663,7 +666,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
   }
   \Return $P'$，$Q'$\;
 \end{algorithm}
-算法输入点集$P$和$Q$，需要参数初始刚体变换$T$，以及允许的距离误差$\delta$，由于点集$P$是由物体的CAD模型转换过来的，因此不对其进行滤波，只对点集$Q$进行离群点去除。具体方法是，首先使用$T$对点集$P$进行刚体变换；然后对变换后的点集建立kd树，建立kd树的目的是为了快速在点集$P$中找到距离某点最近的点，其查找的时间复杂度为$O(kN^{1-1/k}$，其中$k$是所建立kd树的维数，显然对于三维空间中点集为3，$N$是建立的kd树的节点个数；建立好kd树后，对点集$Q$中的每个点在kd树中找到与之距离最近的点，如果两点间的距离大于所设的参数$\delta$，则在点集Q中去除该点。实际运行Outlier filter算法的效果如图\ref{fig:outlier-filter}所示。
+算法输入点集$P$和$Q$，需要参数初始刚体变换$T$，以及允许的距离误差$\delta$，由于点集$P$是由物体的CAD模型转换过来的，因此不对其进行滤波，只对点集$Q$进行离群点去除。具体方法是，首先使用$T$对点集$P$进行刚体变换；然后对变换后的点集建立kd树，建立kd树的目的是为了快速在点集$P$中找到距离某点最近的点，其查找的时间复杂度为$O(kN^{1-1/k})$，其中$k$是所建立kd树的维数，显然对于三维空间中点集为3，$N$是建立的kd树的节点个数；建立好kd树后，对点集$Q$中的每个点在kd树中找到与之距离最近的点，如果两点间的距离大于所设的参数$\delta$，则在点集Q中去除该点。实际运行Outlier filter算法的效果如图\ref{fig:outlier-filter}所示。
 \begin{figure}[ht]
   \centering
   \includegraphics[width=15cm]{outlier-filter}
@@ -671,7 +674,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
   \label{fig:outlier-filter}
 \end{figure}
 
-在滤去离群点后，为了提升匹配精度，我们使用ICP算法对滤去离群点后的点云进行迭代匹配。。ICP算法本质上是基于最小二乘法的最优配准方法。该算法重复进行选择对应关系点对，计算最优刚体变换，直到满足正确配准的收敛精度要求。由于ICP算法是一种迭代算法，因此只要时间允许便可以获取足够精度的解，但也正因为如此，ICP也容易陷入局部最优解。本文充分考虑了ICP算法的这个特点，通过改进的4PCS算法给出初始的刚体变换来避免ICP算法陷入局部最优解，同时通过迭代来提高最后输出的刚体变换精度。
+在滤去离群点后，为了提升匹配精度，我们使用ICP算法对滤去离群点后的点云进行迭代匹配。ICP算法本质上是基于最小二乘法的最优配准方法。该算法重复进行选择对应关系点对，计算最优刚体变换，直到满足正确配准的收敛精度要求。由于ICP算法是一种迭代算法，因此只要时间允许便可以获取足够精度的解，但也正因为如此，ICP也容易陷入局部最优解。本文充分考虑了ICP算法的这个特点，通过改进的4PCS算法给出初始的刚体变换来避免ICP算法陷入局部最优解，同时通过迭代来提高最后输出的刚体变换精度。
 
 ICP算法的原理很简单，给定两个点集$P_n:=\left\{\mathbf{p}_1,\mathbf{p}_2,\ldots,\mathbf{p}_n\right\}$和$Q_m:=\left\{\mathbf{q}_1,\mathbf{q}_2,\ldots,\mathbf{q}_m\right\}$，以及初始旋转变换$R$和平移变换$t$，以及迭代结束额距离误差$\delta$，ICP算法迭代步骤如下：
 \begin{itemize}
@@ -820,14 +823,14 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
   \Return $Res$
 \end{algorithm}
 
-3D-MRAI算法首先会将目标的CAD模型转为匹配所需的点云。具体如何转换的话，基本思想是参考Uniform Sampling算法，Uniform Sampling算法的核心思想是以3D栅格中所有点的质心代替这些点，从而达到降采样。类似地，对于CAD模型也建立3D栅格，但由于无法获得3D栅格总所有点，因此判断CAD模型是否穿过3D栅格，如果穿过3D栅格，则在该3D栅格中心出增加一个点。显然3D栅格的边长越大，转换后的点云数量越小，精度越低，考虑到所使用相机生成点云的精度，因使CAD模型转换后的点云的精度与相机采集的点云的精度近似，实际取3D栅格边长为1mm，一个实际工件的CAD模型和以1mm为边长进行采样转换后的模型点云如图~\ref{fig:model-pc}~所示。
+3D-MRAI算法首先会将目标的CAD模型转为匹配所需的点云。具体如何转换的话，基本思想是参考Uniform Sampling算法，Uniform Sampling算法的核心思想是以3D栅格中所有点的质心代替这些点，从而达到降采样。类似地，对于CAD模型也建立3D栅格，但由于无法获得3D栅格总所有点，因此判断CAD模型是否穿过3D栅格，如果穿过3D栅格，则在该3D栅格中心出增加一个点。显然3D栅格的边长越大，转换后的点云数量越小，精度越低，考虑到所使用相机生成点云的精度，因使CAD模型转换后的点云的精度与相机采集的点云的精度近似，实际取3D栅格边长为1mm，一个实际工件的CAD模型和以1mm为边长进行采样转换后的模型点云如图\ref{fig:model-pc}所示。
 \begin{figure}[ht]
   \centering
   \subfloat[原CAD模型]{\includegraphics[width=7cm]{object-model}}
   \hskip1cm
   \subfloat[转换后点云]{\includegraphics[width=6cm]{object-pointcloud}}
-  \label{fig:model-pc}
   \caption{CAD模型和转换后的点云}
+  \label{fig:model-pc}
 \end{figure}
 
 然后3D-MRAI算法会通过深度图计算HHA图和点云，由深度图计算HHA图的算法上文已经详细叙述过了，此处不再复述；将深度图变换为点云这一步则相对简单，只要通过深度摄像头的内参矩阵反投影到三维空间即可，详细见第~\ref{chap:rgbd}~章中RGB-D相机的数学模型。
@@ -835,10 +838,10 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 处理完这些数据后，输入RGB图像和HHA图到检测模块，通过检测模块得到目标物体的BBox/Mask。然后根据BBox/Mask从深度图对应的点云中抠出目标点云，由于深度图转换的点云是有序的，因此BBox/Mask在深度图中的索引坐标与深度图转换的点云的索引坐标是一致的，只要将点云中对应的点提取出来就行，并滤去无效的点然后适当降采样即可，尽管滤波和降采样之后的目标点云是无序的，但后续匹配算法并不需要输入点云有序，而且降采样后点云数量减少，将会减少后续匹配算法的时间。
 
 
-裁剪得到目标物体的点云$Q_i$后，找出对应物体的CAD模型转换的点云$P_i$，将$P_i$和$Q_i$输入到A4PCS-ICP模型，即可得到CAD模型到目标点云之间的刚体变换$T_i$，由于CAD模型坐标系与相机坐标系重叠，因此将矩阵$T$转换为$X,Y,Z,r,p,y$就是目标点云在相机坐标系下的位姿Pose，最后将所有匹配得到的结果与目标检测的结果组合，并滤去匹配或检测分数较低的结果。
+裁剪得到目标物体的点云$Q_i$后，找出对应物体的CAD模型转换的点云$P_i$，将$P_i$和$Q_i$输入到匹配模块，即可得到CAD模型到目标点云之间的刚体变换$T_i$，由于CAD模型坐标系与相机坐标系重叠，因此将矩阵$T$转换为$X,Y,Z,r,p,y$就是目标点云在相机坐标系下的位姿Pose，最后将所有匹配得到的结果与目标检测的结果组合，并滤去匹配或检测分数较低的结果。
 
 \section{3D目标位姿估计实验}
-为了评价所提出的3D-MRAI的性能，设计了3D目标位姿估计的实验，并与文献\cite{hinterstoisser2012model}所提出的基于LINEMOD算法的3D目标位姿估计框架相比。
+为了评价所提出的3D-MRAI的性能，设计了3D目标位姿估计的实验，并与文献\cite{hinterstoisser2012model}所提出的基于LINEMOD算法的3D目标位姿估计框架相比较。
 \subsection{数据集}
 实验所使用的数据集是workpiece数据集，前文已经部分介绍过了，该数据集是在实验室采集的三类物体，检测模块实验中所用workpiece数据集中的ground truth是物体的种类、BBox和Mask，workpiece数据集中测试集中的图片的ground truth除了物体的种类、BBox和Mask，还有物体的位姿，物体的位姿是通过在物体旁固定标定板采集的。具体方法是，通过固定标定板在目标物体旁，我们可以记录标定板到目标的刚体变换关系$T_1$，然后我们通过彩色摄像头可以检测出标定板的位姿$T_2$，则物体的位姿可以通过下式得到
 \begin{equation}
@@ -873,13 +876,13 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
   \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
   \label{tab:mrai}
 \end{table}
-表中$k_m$从$5\%$变化到$15\%$，表示物体直径的占比，$k_m$越大，允许的姿态误差就越大，因此准确率就越高。实际实验时，发现$k_m\approx 10\%$时基本上肉眼可以看出匹配的姿态误差。将表\ref{tab:mrai}绘制成图如\ref{fig:mrai}所示，从图中可以发现本文所提出的3D-MRAI算法的准确率大大超过了Hinterstorisser等人的算法，在$k_m=13\%$是3D-MRAI算法的准确率已经接近$100\%$了，以肉眼可以看出匹配的姿态误差$k_m=9\%$为标准时3D-MRAI算法的准确达到了$98.10\%$，比Hinterstorisser等人提出的算法高了大约$9$个百分点。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=15cm]{accuracy}
+  \includegraphics[width=14cm]{accuracy}
   \caption{3D-MRAI和Hinterstorisser等人的算法准确率曲线}
   \label{fig:mrai}
 \end{figure}
+表中$k_m$从$5\%$变化到$15\%$，表示物体直径的占比，$k_m$越大，允许的姿态误差就越大，因此准确率就越高。实际实验时，发现$k_m\approx 10\%$时基本上肉眼可以看出匹配的姿态误差。将表\ref{tab:mrai}绘制成图如\ref{fig:mrai}所示，从图中可以发现本文所提出的3D-MRAI算法的准确率大大超过了Hinterstorisser等人的算法，在$k_m=13\%$是3D-MRAI算法的准确率已经接近$100\%$了，以肉眼可以看出匹配的姿态误差$k_m=9\%$为标准时3D-MRAI算法的准确达到了$98.10\%$，比Hinterstorisser等人提出的算法高了大约$9$个百分点。
 
 为了进一步观察算法给出位姿的精度，取$k_m=9\%$时3D-MRAI准确检测的例子，将目标物体的位姿转换为$X,Y,Z,r,p,y$六个直观的变量三维位置和姿态欧拉角，然后于ground truth相比较，得到算法结果在距离和角度上的误差的频率直方图如图\ref{fig:pose-error}所示。
 \begin{figure}[ht]
