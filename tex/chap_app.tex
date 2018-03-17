@@ -28,7 +28,7 @@
 本文所设计的基于3D-MRAI的随机分拣系统的硬件系统如图\ref{fig:hardware-sys}所示。
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=14cm]{hardware-sys}
+  \includegraphics[width=10cm]{hardware-sys}
   \caption{基于3D-MRAI的随机分拣系统硬件框架}
   \label{fig:hardware-sys}
 \end{figure}
@@ -85,6 +85,7 @@ Camera模块主要实现对偶RGB-D图像的匹配与合成，旨在提供高质
 所采用的嵌入式计算机使用的是嵌入式Linux操作系统，当然由于嵌入式计算机特性，软件的开发主要在通用计算机上，通用计算机也使用了Linux操作系统，这样在编写完成的软件可以无缝拷贝到嵌入式Linux操作系统上，但由于通用计算机和嵌入式计算机的CPU架构不同，将程序拷贝到嵌入式计算机上后，需要重新编译。当然也可以考虑直接在通用计算机上交叉编译嵌入式计算机上的可执行程序，但考虑到调试方便，并且所使用的嵌入式计算机性能强劲，并未使用交叉编译的方式。考虑到系统的性能以及算法的复杂性，整个系统软件使用C++ 11编写，Clang作为编译器，CMake作为自动化编译工具，git作为版本控制，具体如表\ref{tab:dev_env}所示。
 \begin{table}[ht]
   \centering
+  \caption{系统开发环境}
   \begin{tabular}{cc}
     \toprule
     操作系统&Ubuntu 16.04\\
@@ -93,7 +94,6 @@ Camera模块主要实现对偶RGB-D图像的匹配与合成，旨在提供高质
     版本控制& git 2.7.4 \\
     \bottomrule
   \end{tabular}
-  \caption{系统开发环境}
   \label{tab:dev_env}
 \end{table}
 
@@ -276,11 +276,12 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 \subsection{实验结果}
 \begin{table}[ht]
   \centering
+  \caption{随机分拣实验结果}
   \begin{tabular}{cccccc}
     \toprule
     &成功率R&响应时间$T_r$&抓取时间$T_1$&放置时间$T_2$&工作周期$T$ \\
     \midrule
-    1&100\%&711ms&7.6s&4.2s&12.5s \\
+    1&100\%&711ms&7.6s&4.2s&11.9s \\
     2&100\%&729ms&6.8s&4.2s&11.0s \\
     3&100\%&708ms&6.5s&4.2s&10.7s \\
     4&100\%&701ms&8.1s&4.2s&12.3s \\
@@ -290,10 +291,9 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
     8&100\%&732ms&9.1s&4.2s&13.3s \\
     9&100\%&718ms&8.9s&4.2s&13.1s \\
    10&100\%&723ms&6.9s&4.2s&11.1s \\
-    \bf{Avg.}&\bf{100\%}&\bf{715ms}&\bf{7.77s}&\bf{4.20s}&\bf{12.04s} \\
+    \bf{Avg.}&\bf{100\%}&\bf{715ms}&\bf{7.77s}&\bf{4.20s}&\bf{11.98s} \\
     \bottomrule
   \end{tabular}
-  \caption{随机分拣实验结果}
   \label{tab:app_res}
 \end{table}
 \begin{figure}[ht]
@@ -428,7 +428,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
         clip=false
         ]
         \addplot[only marks, mark=*, blue] plot coordinates {
-          (1,12.5)
+          (1,11.9)
           (2,11.0)
           (3,10.7)
           (4,12.3)
@@ -440,10 +440,10 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
           (10,11.1)
         };
         \addplot[red, dashed] plot coordinates {
-          (1,12.04)
-          (10,12.04)
+          (1,11.98)
+          (10,11.98)
         };
-        \node[red,right] at (axis cs: 10,12.04) {\scriptsize{Avg}};
+        \node[red,right] at (axis cs: 10,11.98) {\scriptsize{Avg}};
       \end{axis}
     \end{tikzpicture}
   }
@@ -453,7 +453,7 @@ Robot模块根据Vision模块输出的工件位姿，将其变换到机器人坐
 所设计的随机分拣系统的硬件系统抓取完十箱物料后，统计每箱的成功率、平均响应时间、平均抓取时间、平均放置时间和平均工作周期，绘制成表\ref{tab:app_res}以及图\ref{fig:app_res}。
 从表中可以发现所设计的基于3D-MRAI的随机分拣系统的平均抓取成功率为100\%，但理论上随着抓取次数的增加，个人认为系统一定会出现抓取失败的情况，并且实验中所使用的物料也相对单一，不同的物料理论上也会影响视觉的识别效果，因此换一种物料系统的抓取成功率也可能达不到100\%。但总体上来说，此次实验100\%的成功率充分说明了所设计的Bin-Picking视觉系统完全能满足一般随机分拣任务，成功率高。
 
-另外，视觉系统的响应时间为$715ms$左右，分拣系统的工作周期为$12.04s$左右，从表中数据可以发现工作周期基本上为抓取时间和放置时间之和，也就是完全是机械臂运动的时间，除了一开始系统启动时会增加额外的响应时间，但这对真个工作时间来说可以忽律不计，因此，所设计的基于3D-MRAI算法的Bin-Picking视觉系统在时间上完全满足一般分拣任务的要求，实时性高。
+另外，视觉系统的响应时间为$715ms$左右，分拣系统的工作周期为$11.98s$左右，从表中数据可以发现工作周期基本上为抓取时间和放置时间之和，也就是完全是机械臂运动的时间，除了一开始系统启动时会增加额外的响应时间，但这对真个工作时间来说可以忽律不计，因此，所设计的基于3D-MRAI算法的Bin-Picking视觉系统在时间上完全满足一般分拣任务的要求，实时性高。
 
 \section{本章小结}
 本章将3D-MRAI算法应用到实际机器人上，用以解决Bin-Picking随机分拣问题，设计并实现了一个Bin-Picking视觉系统，并进行了抓取实验，实验结果表明，所设计的视觉系统有很高的抓取成功率，并且其响应速度也完全能满足分拣任务的要求。

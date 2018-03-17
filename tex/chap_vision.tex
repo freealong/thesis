@@ -435,6 +435,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 由于两个数据集内图片的大小都是一样的，因此算法的时间性能在两个数据集上并不会有什么差异，因此表\ref{tab:fps}中直接统计了算法在两个数据集测试样本上FPS的平均值。从表\ref{tab:fps}可以看出本文所提出的检测模块与Faster R-CNN和Mask R-CNN相比，普遍具有更低的FPS，主要因为增加了HHA数据并且增加了STN模块。但考虑到本文算法的具体应用，适当降低的FPS并不会对具体使用造成什么影响。
 \begin{table}[ht]
   \centering
+  \caption{算法时间性能}
   \begin{tabular}{cc}
     \toprule
     &FPS \\
@@ -445,7 +446,6 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
     \bf{Our method(based on Mask R-CNN)}&\bf{2.5} \\
     \bottomrule
   \end{tabular}
-  \caption{算法时间性能}
   \label{tab:fps}
 \end{table}
 
@@ -709,7 +709,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 \end{equation}
 再另
 \begin{equation}
-  W = \sum_{i=1}^n{\mathbf{p}_i'\mathbf{q}_i'}
+  W = \sum_{i=1}^n{\mathbf{p}_i'(\mathbf{q}_i')^T}
 \end{equation}
 然后对矩阵$W$进行奇异值分解：
 \begin{equation}
@@ -734,7 +734,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 
 实验主要考察点云匹配的误差以及算法的运行时间，点云匹配的误差定义为两个点云之间的RMS误差:
 \begin{equation}
-  S = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P')}\norm{q_i-p_j}^2}}
+  E = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P')}\norm{q_i-p_j}^2}}
 \end{equation}
 显然RMS误差越小，点云的匹配效果越好，精度越高。
 
@@ -743,7 +743,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}
-    \begin{axis}[xlabel=$\sigma$ of Gaussian noise, ylabel=estimation error]
+    \begin{axis}[xlabel=$\sigma$ of Gaussian noise, ylabel=estimation error (mm)]
       \addplot[smooth, mark=*, blue] plot coordinates {
         (0, 0)
         (0.5,1)
@@ -875,6 +875,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 3D-MRAI算法在workpiece数据集上一些测试用例的运算结果可视化如图\ref{fig:3dmrai-res}所示。变化系数$k_m$，根据3D-MRAI和Hinterstoisser等人的算法在测试集上的运行结果，统计算法的准确率如表\ref{tab:mrai}所示。
 \begin{table}[ht]
   \centering
+  \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
   \begin{tabular}{ccccccc}
     \toprule
     $k_m[\%]$&5&7&9&11&13&15\\
@@ -883,12 +884,33 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
     \bf{3D-MRAI}&95.12& 97.35& 98.10& 98.69& 99.22& 100.00\\
     \bottomrule
   \end{tabular}
-  \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
   \label{tab:mrai}
 \end{table}
 \begin{figure}[ht]
   \centering
-  \includegraphics[width=14cm]{accuracy}
+     \begin{tikzpicture}
+       \begin{axis}[xlabel=$k_m$ (\%),
+         ylabel=Precision (\%),
+         legend pos=south east,]
+         \addplot[smooth, mark=*, blue] plot coordinates {
+           (5, 95.12)
+           (7, 97.35)
+           (9, 98.1)
+           (11, 98.69)
+           (13, 99.22)
+           (15, 100.00)
+         };
+         \addplot[smooth, mark=x, red] plot coordinates {
+           (5, 75.63)
+           (7, 82.84)
+           (9, 89.13)
+           (11, 93.48)
+           (13, 96.83)
+           (15, 98.12)
+         };
+         \legend{3D-MRAI,Hinterstorisser et al.}
+       \end{axis}
+     \end{tikzpicture}
   \caption{3D-MRAI和Hinterstorisser等人的算法准确率曲线}
   \label{fig:mrai}
 \end{figure}
@@ -912,6 +934,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 除了关心算法的准确率和精度，算法的运行时间也是我们所关心的。在实验所用的计算机上，本文所设计的3D-MRAI算法与Hinterstorisser等人设计的基于LINEMOD算法的平均帧率如表\ref{tab:mrai-fps}所示。
 \begin{table}[ht]
   \centering
+  \caption{3D-MRAI和Hinterstorisser等人的算法FPS}
   \begin{tabular}{ccc}
     \toprule
     &Hinterstoisser et al.&\bf{3D-MRAI}\\
@@ -919,7 +942,6 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
     FPS&7.6&2.2\\
     \bottomrule
   \end{tabular}
-  \caption{3D-MRAI和Hinterstorisser等人的算法准确率}
   \label{tab:mrai-fps}
 \end{table}
 表中可以看出3D-MRAI的FPS相比Hinterstorisser等人的算法的FPS相对较低，由于使用了深度神经网络相关的算法，涉及到较大的计算量，因此较低的FPS也在情理之中。
