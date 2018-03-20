@@ -734,7 +734,7 @@ ICP算法的迭代过程还是相对来说十分简单的，唯一需要思考�
 
 实验主要考察点云匹配的误差以及算法的运行时间，点云匹配的误差定义为两个点云之间的RMS误差:
 \begin{equation}
-  E = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P')}\norm{q_i-p_j}^2}}
+  E = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P)}\norm{q_i-p_j}^2}}
 \end{equation}
 显然RMS误差越小，点云的匹配效果越好，精度越高。
 

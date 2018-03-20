@@ -110,20 +110,20 @@
     \end{column}
     }
   \end{columns}
-  \vfill
-  \begin{center}
-  \begin{tikzpicture}
-    \uncover<6->{
-      \node (upper) {\includegraphics[height=1.8cm]{upper-depth}};
-      \node [right=0.2 of upper] (lower) {\includegraphics[height=1.8cm]{lower-depth}};
-      \node [right=0.2 of lower] (stereo) {\includegraphics[height=1.8cm]{stereo-depth}};
-      \node [right=0.2 of stereo] (fuse) {\includegraphics[height=1.8cm]{fuse-depth}};
-      \node [below=0 of upper, font={\tiny}] {Upper Depth};
-      \node [below=0 of lower, font={\tiny}] {Lower Depth};
-      \node [below=0 of stereo, font={\tiny}] {Stereo Depth};
-      \node [below=0 of fuse, font={\tiny}] {Fuse Depth};}
-  \end{tikzpicture}
-  \end{center}
+  % \vfill
+  % \begin{center}
+  % \begin{tikzpicture}
+  %   \uncover<6->{
+  %     \node (upper) {\includegraphics[height=1.8cm]{upper-depth}};
+  %     \node [right=0.2 of upper] (lower) {\includegraphics[height=1.8cm]{lower-depth}};
+  %     \node [right=0.2 of lower] (stereo) {\includegraphics[height=1.8cm]{stereo-depth}};
+  %     \node [right=0.2 of stereo] (fuse) {\includegraphics[height=1.8cm]{fuse-depth}};
+  %     \node [below=0 of upper, font={\tiny}] {Upper Depth};
+  %     \node [below=0 of lower, font={\tiny}] {Lower Depth};
+  %     \node [below=0 of stereo, font={\tiny}] {Stereo Depth};
+  %     \node [below=0 of fuse, font={\tiny}] {Fuse Depth};}
+  % \end{tikzpicture}
+  % \end{center}
 \end{frame}
 
 \begin{frame}[fragile]{Experiment \& Results}
@@ -432,7 +432,7 @@
   \vfill
   \begin{tikzpicture}
     \uncover<2->{
-      \node (error) {$E = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P')}\|{q_i-p_j}\|^2}}$};
+      \node (error) {$E = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{\min_{p_j\in T(P)}\|{q_i-p_j}\|^2}}$};
     }
     \uncover<3->{
       \node[right =1. of error] {$d \uparrow$, the size of point cloud $\downarrow$};
