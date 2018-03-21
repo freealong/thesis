@@ -144,15 +144,15 @@ Mask R-CNN网络本来的输入是RGB图，经过实验测试，本文发现单�
 计算完上述HHA三个通道后，为了计算和存储方便，分别将三个通道的值线性变换到0到255之间，可视化如图\ref{fig:hha}所示。
 \begin{figure}
   \centering
-  \subfloat[Depth frame]{\includegraphics[width=4.5cm]{depth_frame}}
+  \subfloat[深度图]{\includegraphics[width=4.5cm]{depth_frame}}
   \hskip5em
-  \subfloat[HHA frame]{\includegraphics[width=4.5cm]{hha_frame}}
+  \subfloat[HHA图]{\includegraphics[width=4.5cm]{hha_frame}}
   \vfill
-  \subfloat[Horizontal disparity frame]{\includegraphics[width=4.5cm]{disparity_frame}}
+  \subfloat[水平视差图]{\includegraphics[width=4.5cm]{disparity_frame}}
   \hfill
-  \subfloat[Height above ground frame]{\includegraphics[width=4.5cm]{height_frame}}
+  \subfloat[距离地面高度图]{\includegraphics[width=4.5cm]{height_frame}}
   \hfill
-  \subfloat[Angle with gravity frame]{\includegraphics[width=4.5cm]{angle_frame}}
+  \subfloat[法向量与重力夹角图]{\includegraphics[width=4.5cm]{angle_frame}}
   \caption{HHA可视化效果图}
   \label{fig:hha}
 \end{figure}
@@ -327,7 +327,7 @@ APC数据集中标注的标签可以认为是每个物体在相机坐标系下�
 \begin{figure}[ht]
   \centering
   \includegraphics[width=10cm]{apc_model1}
-  \caption{easter turtle sippy cup point cloud}
+  \caption{APC数据集中的3D模型}
   \label{fig:apc_model}
 \end{figure}
 模型点云的缺失，因此将点云投影到图像平面生成的mask也有部分缺失，尽管已经对生成的mask进行了一些滤波处理，但部分Mask还是有明显的缺失。
@@ -359,7 +359,7 @@ workpiece数据集的ground truth由人工标定，其中据测试集中有的gr
 \begin{figure}[ht]
   \centering
   \includegraphics[width=8cm]{iou}
-  \caption{bounding box交并比}
+  \caption{Bounding Box交并比}
   \label{fig:iou}
 \end{figure}
 两个BBox的交并比定义为：
@@ -670,7 +670,7 @@ $AP_{0.5}$表示检测的结果与ground truth的交并比大于0.5的个数占�
 \begin{figure}[ht]
   \centering
   \includegraphics[width=15cm]{outlier-filter}
-  \caption{Outlier filter效果图}
+  \caption{离群点滤波效果图}
   \label{fig:outlier-filter}
 \end{figure}
 

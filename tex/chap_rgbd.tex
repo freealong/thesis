@@ -58,9 +58,9 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 本文所使用的RGB-D相机是Intel的Realsense SR300相机，SR300采用的结构光的原理获取深度\footnote{此后所提到的RGB-D相机均指与SR300相机类似的采用结构光原理获取深度的RGB-D相机}，其内部结构如图\ref{fig:sr300}所示。从图\ref{fig:sr300}可以看出，SR300内部的传感器主要有彩色摄像头（Color Camera）、红外激光发射器（Infrared Laser Projector）和红外摄像头（Infrared Camera）。Color Camera是1920×1080像素的普通针孔摄像头，用来获取彩色图像；Infrared Laser Projector和Infrared Camera用来获取深度图像或者红外成像图，两种成像流程如图\ref{fig:capture_flow}所示。
 \begin{figure}[!ht]
   \centering
-  \subfloat[Depth Video Data Flow]{\includegraphics[width=12cm]{depth_flow}}
+  \subfloat[深度成像流程图]{\includegraphics[width=12cm]{depth_flow}}
   \vfill
-  \subfloat[IR Video Data Flow]{\includegraphics[width=12cm]{ir_flow}}
+  \subfloat[红外成像流程图]{\includegraphics[width=12cm]{ir_flow}}
   \caption{Realsense SR300深度成像流程}
   \label{fig:capture_flow}
 \end{figure}
@@ -191,11 +191,11 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 \item \emph{step 3}：标定彩色相机和深度相机之间的齐次变换关系
 \end{itemize}
 
-步骤1标定彩色相机内参以及畸变参数相对来说比较简单，主要参考文献\cite{Zhang2002}，但所使用的标定板是不对称圆盘标定板（Asymmetrical Circle Board），如图\ref{fig:circle_board}是$4\times 11$的不对称圆盘标定板。
+步骤1标定彩色相机内参以及畸变参数相对来说比较简单，主要参考文献\cite{Zhang2002}，但所使用的标定板是不对称圆盘标定板（Asymmetrical Circle Board），如图\ref{fig:circle_board}所示，是$4\times 11$的不对称圆盘标定板。
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=10cm]{circle_board}
-  \caption{Asymmetrical Circle Board}
+  \caption{不对称圆盘标定板}
   \label{fig:circle_board}
 \end{figure}
 使用圆盘标定板而非棋盘格标定板的原因是圆盘相对于棋盘格有更高的检测精度，在某些情况下可以达到0.1到0.01像素的亚像素精度，当然代价是相比计算棋盘格的角点，计算椭圆（圆形经过投影变换后退化为椭圆）的中心会涉及到较为复杂的数学运算，这也是为什么工业上大多使用圆盘作为标定板的原因。
@@ -414,13 +414,13 @@ Structure Light获取深度信息的原理是通过激光发射器投射带有�
 算法\ref{alg:fuse}不仅考虑了深度缺失的情况，对于深度信息差值过大的情况也进行了处理。实际处理的效果如图\ref{fig:fuse}所示。
 \begin{figure}[!ht]
   \centering
-  \subfloat[Upper depth]{\includegraphics[width=3.5cm]{upper-depth}}
+  \subfloat[上相机深度图]{\includegraphics[width=3.5cm]{upper-depth}}
   \hskip2pt
-  \subfloat[Lower depth]{\includegraphics[width=3.5cm]{lower-depth}}
+  \subfloat[下相机深度图]{\includegraphics[width=3.5cm]{lower-depth}}
   \hskip2pt
-  \subfloat[Stereo depth]{\includegraphics[width=3.4cm]{stereo-depth}}
+  \subfloat[双目构成深度图]{\includegraphics[width=3.4cm]{stereo-depth}}
   \hskip2pt
-  \subfloat[Fuse depth]{\includegraphics[width=3.5cm]{fuse-depth}}
+  \subfloat[融合的深度图]{\includegraphics[width=3.5cm]{fuse-depth}}
   \caption{深度融合算法效果图}
   \label{fig:fuse}
 \end{figure}

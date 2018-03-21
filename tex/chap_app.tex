@@ -115,7 +115,7 @@ Camera模块的主要接口是一个虚基类Camera，如图\ref{fig:camera-uml}
 \begin{figure}[ht]
   \centering
   \includegraphics[width=12cm]{camera-uml}
-  \caption{Camera module UML}
+  \caption{相机模块UML图}
   \label{fig:camera-uml}
 \end{figure}
 相机模块通过虚基类Camera定义了一些通用的接口函数，其他具体的相机通过继承这个基类来实现，对于外部使用者来说并不需要关心这些继承Camera类的具体实现，只需要调用Camera中定义的接口即可。整个模块具有很强的扩展性，如增加一个新的相机可以通过增加一个继承Camera的类，外部调用的模块无需改写。实际上，使用何种相机通过设置配置文件可以由用户选择。
@@ -158,7 +158,7 @@ Vision模块的主要类的UML图如图\ref{fig:vision-uml}所示。
 \begin{figure}[ht]
   \centering
   \includegraphics[width=14cm]{vision-uml}
-  \caption{Vision module UML}
+  \caption{视觉模块UML图}
   \label{fig:vision-uml}
 \end{figure}
 Vision类提供在图像中找出目标工件位姿的接口，其核心是3D-MRAI算法，因此也有两个模块：Detector和Matcher。Detector和Matcher的设计思想和Camera模块类似，通过定义接口屏蔽具体实现，从提高了程序的扩展性，因为显然可以有多种检测的方法，比如本文就有基于Faster R-CNN和基于Mask R-CNN的两种检测模块，通过这种方式可以在不改动程序代码的情况下，通过配置文件快速切换所想要使用的算法。
